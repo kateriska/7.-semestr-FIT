@@ -1,5 +1,6 @@
 import System.Environment
-import Text.Parsec
+import Data.List.Split
+import Debug.Trace
 
 checkArguments :: [String] -> (String, String)
 checkArguments [switch] = checkArguments [switch, ""]
@@ -15,23 +16,32 @@ readGrammarInput :: String -> IO String
 readGrammarInput [] = getContents
 readGrammarInput file = readFile file
 
-type Rule = (Char, [Char])
+
+
+
+
+
+
+
+type Rule = (String, [String])
 
 data CFG_t = CFG_t
   {
-    nonterminal_symbols :: String,
-    terminal_symbols :: String,
+    nonterminal_symbols :: [String],
+    terminal_symbols :: [String],
     starting_symbol :: String,
-    grammar_rules :: [String]
+    grammar_rules :: [[[Char]]]
   } deriving (Eq, Read, Show)
 
 parseCFG :: String -> CFG_t
 parseCFG grammar_input = CFG_t {
-nonterminal_symbols = lines (grammar_input) !! 0,
-terminal_symbols = lines (grammar_input) !! 1,
+nonterminal_symbols = splitOn "," (lines (grammar_input) !! 0),
+terminal_symbols = splitOn "," (lines (grammar_input) !! 1),
 starting_symbol = lines (grammar_input) !! 2,
-grammar_rules = tail (lines (grammar_input))
+grammar_rules = map (splitOn "->") (drop 3 (lines (grammar_input)))
 }
+
+
 
 
 
