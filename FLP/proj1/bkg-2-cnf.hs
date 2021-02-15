@@ -33,10 +33,6 @@ starting_symbol = lines (grammar_input) !! 2,
 grammar_rules = tail (lines (grammar_input))
 }
 
-createCFGRepresenation :: String -> String
-let createCFGRepresenation created_repr = parseCFG createCFGRepresenation = "Completed "
-
---getLinesFile :: IO String -> [String]
 
 
 main :: IO ()
@@ -61,8 +57,9 @@ main = do
     print (starting_symbol_line)
     print (grammar_rules_line)
 
-    createCFGRepresenation grammar_input
+    let grammar_input_transformed = parseCFG grammar_input
 
+    print (grammar_input_transformed)
 
     --let grammar_input_transformed = parseCFG grammar_input_lines
 
