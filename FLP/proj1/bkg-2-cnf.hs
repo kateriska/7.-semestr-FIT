@@ -1,6 +1,6 @@
 import System.Environment
 import Data.List.Split
-import Debug.Trace
+import Data.List
 
 checkArguments :: [String] -> (String, String)
 checkArguments [switch] = checkArguments [switch, ""]
@@ -17,8 +17,23 @@ readGrammarInput [] = getContents
 readGrammarInput file = readFile file
 
 
+{-
+isLetter :: Char -> Bool
+isLetter c = (('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z'))
 
+checkSyntaxNonterminals :: [String] -> [String]
+checkSyntaxNonterminals [x:xs]
+  | isLetter x == False = False
+  | isLetter x == True = True
 
+checkSyntaxNonterminalsOverall :: [String] -> [String]
+checkSyntaxNonterminalsOverall xs
+  | checkSyntaxNonterminals xs == False = error "blabla"
+  | checkSyntaxNonterminals xs == True  = xs
+-}
+
+listToTuple :: [a] -> (a,a)
+listToTuple [x,y] = (x,y)
 
 
 
@@ -30,15 +45,24 @@ data CFG_t = CFG_t
     nonterminal_symbols :: [String],
     terminal_symbols :: [String],
     starting_symbol :: String,
-    grammar_rules :: [[[Char]]]
+    grammar_rules :: [([Char], [Char])]
   } deriving (Eq, Read, Show)
 
+{-
+instance Show CFG_t where
+  show (CFG_t nonterminal_symbols terminal_symbols starting_symbol grammar_rules) =
+    (intercalate "," nonterminal_symbols) ++ "\n" ++
+    (intercalate "," terminal_symbols) ++ "\n" ++
+    starting_symbol ++
+    grammar_rules
+
+-}
 parseCFG :: String -> CFG_t
 parseCFG grammar_input = CFG_t {
-nonterminal_symbols = splitOn "," (lines (grammar_input) !! 0),
+nonterminal_symbols = (splitOn "," (lines (grammar_input) !! 0)),
 terminal_symbols = splitOn "," (lines (grammar_input) !! 1),
 starting_symbol = lines (grammar_input) !! 2,
-grammar_rules = map (splitOn "->") (drop 3 (lines (grammar_input)))
+grammar_rules = map listToTuple (map (splitOn "->") (drop 3 (lines (grammar_input))))
 }
 
 
