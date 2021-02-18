@@ -32,6 +32,26 @@ checkSyntaxNonterminalsOverall xs
   | checkSyntaxNonterminals xs == True  = xs
 -}
 
+isValid :: Char -> Bool
+isValid x
+ | x `elem` ['A'..'Z'] = True
+ | otherwise = False
+
+isValidNonterminal :: [String] -> Bool
+isValidNonterminal x
+ | (all (`elem` ['A'..'Z']) (map head x) && all (== 1) (map length x)) = True
+ | otherwise = False
+
+isValidTerminal :: [String] -> Bool
+isValidTerminal x
+  | (all (`elem` ['a'..'z']) (map head x) && all (== 1) (map length x)) = True
+  | otherwise = False
+
+isValidStartingSymbol :: String -> Bool
+isValidStartingSymbol x
+  | length x == 1 && all (`elem` ['A'..'Z']) (x) = True
+  | otherwise = False
+
 listToTuple :: [a] -> (a,a)
 listToTuple [x,y] = (x,y)
 
@@ -68,6 +88,14 @@ starting_symbol = lines (grammar_input) !! 2,
 grammar_rules = map listToTuple (map (splitOn "->") (drop 3 (lines (grammar_input))))
 }
 
+checkSyntaxCFG :: CFG_t -> Bool
+checkSyntaxCFG (CFG_t nonterminal_symbols terminal_symbols starting_symbol grammar_rules) =
+  if syntaxCorrect == True then True
+  else False
+    where
+      syntaxCorrect = isValidNonterminal nonterminal_symbols && isValidTerminal terminal_symbols && isValidStartingSymbol starting_symbol
+
+
 
 
 
@@ -98,9 +126,16 @@ main = do
 
     print (grammar_input_transformed)
 
+    let check = checkSyntaxCFG grammar_input_transformed
+    print (check)
+
+
+
     --let grammar_input_transformed = parseCFG grammar_input_lines
 
     --print (grammar_input_tran(lines grammar_input) !! sformed)
+
+
 
 
 
