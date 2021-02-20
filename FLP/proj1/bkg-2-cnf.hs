@@ -66,7 +66,8 @@ isValidAlphaCharacter x
 
 isValidRightRule :: [[Char]] -> Bool
 isValidRightRule x
- | all (isValidAlphaCharacter) (map head x)  = True
+ | all (== True) (map  (all isValidAlphaCharacter) x) = True
+ | otherwise = False
 
 isValidGrammarRule :: [[Char]] -> [[Char]] -> Bool
 isValidGrammarRule x y
@@ -116,7 +117,9 @@ checkSyntaxCFG (CFG_t nonterminal_symbols terminal_symbols starting_symbol gramm
     where
       syntaxCorrect = isValidNonterminal nonterminal_symbols && isValidTerminal terminal_symbols && isValidStartingSymbol starting_symbol && isValidGrammarRule (map fst grammar_rules) (map snd grammar_rules)
 
-
+printSyntaxCFGinfo :: Bool -> String
+printSyntaxCFGinfo True = "Info - Format of CFG is correct"
+printSyntaxCFGinfo False = error "Error - Wrong format of input CFG!"
 
 
 
@@ -148,7 +151,9 @@ main = do
     print (grammar_input_transformed)
 
     let check = checkSyntaxCFG grammar_input_transformed
-    print (check)
+
+    let cfg_info_check = printSyntaxCFGinfo check
+    print (cfg_info_check)
 
 
 
