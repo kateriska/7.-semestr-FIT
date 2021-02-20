@@ -1,6 +1,7 @@
 import System.Environment
 import Data.List.Split
 import Data.List
+import Data.Tuple
 
 checkArguments :: [String] -> (String, String)
 checkArguments [switch] = checkArguments [switch, ""]
@@ -52,6 +53,26 @@ isValidStartingSymbol x
   | length x == 1 && all (`elem` ['A'..'Z']) (x) = True
   | otherwise = False
 
+isValidLeftRule :: [[Char]] -> Bool
+isValidLeftRule x
+  | all (`elem` ['A'..'Z']) (map head x) && all (== 1) (map length x) = True
+  | otherwise = False
+
+isValidAlphaCharacter :: Char -> Bool
+isValidAlphaCharacter x
+  | x `elem` ['a'..'z'] = True
+  | x `elem` ['A'..'Z'] = True
+  | otherwise           = False
+
+isValidRightRule :: [[Char]] -> Bool
+isValidRightRule x
+ | all (isValidAlphaCharacter) (map head x)  = True
+
+isValidGrammarRule :: [[Char]] -> [[Char]] -> Bool
+isValidGrammarRule x y
+  | (isValidLeftRule x == True) && (isValidRightRule y  == True) = True
+  | otherwise = False
+
 listToTuple :: [a] -> (a,a)
 listToTuple [x,y] = (x,y)
 
@@ -93,7 +114,7 @@ checkSyntaxCFG (CFG_t nonterminal_symbols terminal_symbols starting_symbol gramm
   if syntaxCorrect == True then True
   else False
     where
-      syntaxCorrect = isValidNonterminal nonterminal_symbols && isValidTerminal terminal_symbols && isValidStartingSymbol starting_symbol
+      syntaxCorrect = isValidNonterminal nonterminal_symbols && isValidTerminal terminal_symbols && isValidStartingSymbol starting_symbol && isValidGrammarRule (map fst grammar_rules) (map snd grammar_rules)
 
 
 
