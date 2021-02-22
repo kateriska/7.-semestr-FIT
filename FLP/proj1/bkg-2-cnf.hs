@@ -106,7 +106,7 @@ data CFG_t = CFG_t
     grammar_rules :: [([Char], [Char])]
   } deriving (Eq, Read)
 
---{-
+--{
 instance Show CFG_t where
   show (CFG_t nonterminal_symbols terminal_symbols starting_symbol grammar_rules) =
     (intercalate "," nonterminal_symbols) ++ "\n" ++
@@ -134,11 +134,19 @@ printSyntaxCFGinfo :: Bool -> String
 printSyntaxCFGinfo True = "Info - Format of CFG is correct"
 printSyntaxCFGinfo False = error "Error - Wrong format of input CFG!"
 
+--runCorrectSwitch :: String -> String
+--runCorrectSwitch "-i" =
+
+-- check whether each rule has "->" separator
+checkRulesSeparators :: String -> String
+checkRulesSeparators x =  printSyntaxCFGinfo (all (==True) (map (isInfixOf "->") (drop 3 (lines (x)))))
+
 
 
 
 main :: IO ()
 main = do
+  -- simmilar for all three switches ------------------------------------------------
     arguments <- getArgs
 
     let (switch, file) = checkArguments arguments
@@ -148,34 +156,20 @@ main = do
 
     print (grammar_input)
 
-
-    let nonterminal_symbols_line = lines (grammar_input) !! 0
-    let terminal_symbols_line = lines (grammar_input) !! 1
-    let starting_symbol_line = lines (grammar_input) !! 2
-    let grammar_rules_line = tail (lines (grammar_input))
-
-    print (nonterminal_symbols_line)
-    print(terminal_symbols_line)
-    print (starting_symbol_line)
-    print (grammar_rules_line)
+    let check_arrow_rules = checkRulesSeparators grammar_input
+    print (check_arrow_rules)
 
     let grammar_input_transformed = parseCFG grammar_input
 
-    print (grammar_input_transformed)
+    --print (grammar_input_transformed)
 
     let check = checkSyntaxCFG grammar_input_transformed
 
     let cfg_info_check = printSyntaxCFGinfo check
     print (cfg_info_check)
 
+    print (grammar_input_transformed)
 
-
-    --let grammar_input_transformed = parseCFG grammar_input_lines
-
-    --print (grammar_input_tran(lines grammar_input) !! sformed)
-
-
-
-
+  ------------------------------------------------------------------------
 
     return ()
