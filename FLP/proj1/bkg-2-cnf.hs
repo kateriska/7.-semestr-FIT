@@ -53,26 +53,39 @@ isValidStartingSymbol x
   | length x == 1 && all (`elem` ['A'..'Z']) (x) = True
   | otherwise = False
 
-isValidLeftRule :: [[Char]] -> Bool
-isValidLeftRule x
-  | all (`elem` ['A'..'Z']) (map head x) && all (== 1) (map length x) = True
+-- check whether left sides of rules have only defined nonterminals from subset of [A..Z]
+isValidLeftRule :: [[Char]] -> [[Char]] -> Bool
+isValidLeftRule left_rule nonterminal_symbols
+  | all (`elem` ['A'..'Z']) (map head left_rule) && all (== 1) (map length left_rule) && all (`elem` (concat (map (take 1) nonterminal_symbols))) (map head left_rule)   = True
   | otherwise = False
 
-isValidAlphaCharacter :: Char -> Bool
-isValidAlphaCharacter x
-  | x `elem` ['a'..'z'] = True
-  | x `elem` ['A'..'Z'] = True
-  | otherwise           = False
+-- check whether terminals and nonterinals in rules are in defined terminals and nonterminals
+isValidAlphaCharacter :: [[Char]] -> [[Char]] -> Char -> Bool
+isValidAlphaCharacter nonterminal_symbols terminal_symbols x
+  | x `elem` ['a'..'z'] && x `elem` concat (map (take 1) terminal_symbols)  = True
+  | x `elem` ['A'..'Z'] && x `elem` concat (map (take 1) nonterminal_symbols) = True
+  | otherwise  = False
 
-isValidRightRule :: [[Char]] -> Bool
-isValidRightRule x
- | all (== True) (map  (all isValidAlphaCharacter) x) = True
+isValidRightRule :: [[Char]] -> [[Char]] -> [[Char]] -> Bool
+isValidRightRule right_rule nonterminal_symbols terminal_symbols
+ | all (== True) (map  (all (isValidAlphaCharacter nonterminal_symbols terminal_symbols)) right_rule) = True
  | otherwise = False
 
-isValidGrammarRule :: [[Char]] -> [[Char]] -> Bool
-isValidGrammarRule x y
-  | (isValidLeftRule x == True) && (isValidRightRule y  == True) = True
+isValidGrammarRule :: [[Char]] -> [[Char]] -> [[Char]] -> [[Char]] -> Bool
+isValidGrammarRule left_rule right_rule nonterminal_symbols terminal_symbols
+  | (isValidLeftRule left_rule nonterminal_symbols == True) && (isValidRightRule right_rule nonterminal_symbols terminal_symbols == True) = True
   | otherwise = False
+
+
+firstRuleStartingSymbol :: [[Char]] -> [Char] -> Bool
+firstRuleStartingSymbol left_rule starting_symbol
+ | head left_rule == starting_symbol = True
+ | otherwise = False
+
+startingSymbolInNonterminals :: [[Char]] -> [Char] -> Bool
+startingSymbolInNonterminals nonterminal_symbols starting_symbol
+ | head starting_symbol `elem` concat (map (take 1) nonterminal_symbols) = True
+ | otherwise = False
 
 listToTuple :: [a] -> (a,a)
 listToTuple [x,y] = (x,y)
@@ -115,7 +128,7 @@ checkSyntaxCFG (CFG_t nonterminal_symbols terminal_symbols starting_symbol gramm
   if syntaxCorrect == True then True
   else False
     where
-      syntaxCorrect = isValidNonterminal nonterminal_symbols && isValidTerminal terminal_symbols && isValidStartingSymbol starting_symbol && isValidGrammarRule (map fst grammar_rules) (map snd grammar_rules)
+      syntaxCorrect = isValidNonterminal nonterminal_symbols && isValidTerminal terminal_symbols && isValidStartingSymbol starting_symbol && isValidGrammarRule (map fst grammar_rules) (map snd grammar_rules) (nonterminal_symbols) (terminal_symbols) && firstRuleStartingSymbol (map fst grammar_rules) starting_symbol && startingSymbolInNonterminals nonterminal_symbols starting_symbol
 
 printSyntaxCFGinfo :: Bool -> String
 printSyntaxCFGinfo True = "Info - Format of CFG is correct"
