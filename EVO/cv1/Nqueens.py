@@ -55,14 +55,7 @@ def printQueens (qs):
 def fitness (qs):
 	confs = 0
 	## !!! ZDE DOPLNTE !!!
-	#  (i - j) = k - l or i + j = k + l.
-
-	'''
-	for x in qs:
-		for y in qs:
-			print x
-			print y
-	'''
+	#  (i - j) = k - l or i + j = k + l. for conflict on diagonals
 
 	for queen1 in range(len(qs)):
 		for queen2 in range(len(qs)):
@@ -74,22 +67,7 @@ def fitness (qs):
 			if (queen1 - qs[queen1] == queen2 - qs[queen2] or queen1 + qs[queen1] == queen2 + qs[queen2]):
 				confs = confs + 1
 
-
-
-	'''
-	for k in range(len(qs)): # kth row and ith column of board
-		for i in range(len(qs)):
-			for j in range(0, k):
-				# (Abs x [j]) - i) = (Abs (j - k))
-				value1 = abs(qs[j]) - i
-				value2 = abs(j - k)
-
-				if (value1 == value2):
-					confs = confs + 1
-
-
-	'''
-	print "Conflicts: " + str(confs)
+	#print "Conflicts: " + str(confs)
 	return confs
 ###########################################################
 ###########################################################
@@ -121,6 +99,9 @@ def metropolis (q, max, param):
 			prevq = newq[:]
 			prevfit = newfit
 			print >> sys.stderr, i, newfit
+
+			if (newfit == 0):
+				break
 
 	print >> sys.stderr
 	return prevq[:]
