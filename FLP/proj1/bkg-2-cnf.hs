@@ -104,9 +104,9 @@ data CFG_t = CFG_t
     terminal_symbols :: [String],
     starting_symbol :: String,
     grammar_rules :: [([Char], [Char])]
-  } deriving (Eq, Read)
+  } deriving (Eq, Read,Show)
 
---{
+{--
 instance Show CFG_t where
   show (CFG_t nonterminal_symbols terminal_symbols starting_symbol grammar_rules) =
     (intercalate "," nonterminal_symbols) ++ "\n" ++
@@ -114,7 +114,7 @@ instance Show CFG_t where
     starting_symbol ++ "\n" ++
     (unlines (map showRule grammar_rules))
 
----}
+--}
 parseCFG :: String -> CFG_t
 parseCFG grammar_input = CFG_t {
 nonterminal_symbols = (splitOn "," (lines (grammar_input) !! 0)),
@@ -140,6 +140,49 @@ printSyntaxCFGinfo False = error "Error - Wrong format of input CFG!"
 -- check whether each rule has "->" separator
 checkRulesSeparators :: String -> String
 checkRulesSeparators x =  printSyntaxCFGinfo (all (==True) (map (isInfixOf "->") (drop 3 (lines (x)))))
+
+
+recursionNA :: [([Char], [Char])] -> [[Char]] -> [[Char]] -> [[Char]]
+recursionNA rules input_set nonterminals = recursionNA (rules) (concat (map (createNA rules input_set) nonterminals)) (concat (map (createNA rules input_set) nonterminals)) 
+-- recursionNA rules input_set nonterminals = concat (map (createNA rules input_set) nonterminals)
+--recursionNA rules input_set nonterminals = concat (map (createNA rules []) nonterminals)
+
+
+createNA :: [([Char], [Char])] -> [[Char]] -> [Char] -> [[Char]]
+--createNA rules [] nonterminal  = (concat (filter (/= []) (map (isNontermForNA []) (filter ((==nonterminal).fst) rules ))))
+createNA rules input_set nonterminal  = (concat (filter (/= []) (map (isNontermForNA input_set) (filter ((==nonterminal).fst) rules ))))
+
+
+
+--createNA :: Char -> [([Char], [Char])] -> [[Char]] -> [[Char]]
+--createNA nonterminal rules input_set = map checkSimpleRule(filter ((==nonterminal).fst) rules)
+
+checkSimpleRule :: ([Char], [Char]) -> Bool
+checkSimpleRule rule
+  | isValidStartingSymbol (snd rule) == True = True
+  | otherwise = False
+
+--checkSimpleRules :: [([Char], [Char])] -> [Bool]
+--checkSimpleRules rules = map checkSimpleRule rules
+
+--addToNA :: [([Char], [Char])] -> [Bool] -> [[Char]] -> [[Char]]
+--addToNA rules simple_rules_bool input_set = map addNonterminalToNA
+
+
+--addNonterminalToNA :: ([Char], [Char]) -> Bool -> [[Char]] -> [[Char]]
+--addToNA rule is_simple_rule input_set
+--  | is_simple_rule == True = input_set ++ [(snd rule)]
+--  | otherwise = input_set
+
+isNontermForNA :: [[Char]] -> ([Char], [Char]) -> [[Char]]
+--isNontermForNA [] rule
+--  | checkSimpleRule rule == True = [(snd rule)]
+--  | otherwise = []
+isNontermForNA input_set rule
+  | checkSimpleRule rule == True = input_set ++ [(snd rule)]
+  | otherwise = input_set
+
+
 
 
 
