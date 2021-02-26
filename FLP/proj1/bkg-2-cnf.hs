@@ -142,9 +142,17 @@ checkRulesSeparators :: String -> String
 checkRulesSeparators x =  printSyntaxCFGinfo (all (==True) (map (isInfixOf "->") (drop 3 (lines (x)))))
 
 
-recursionNA :: [([Char], [Char])] -> [[Char]] -> [[Char]] -> [[Char]]
-recursionNA rules input_set nonterminals = recursionNA (rules) (concat (map (createNA rules input_set) nonterminals)) (concat (map (createNA rules input_set) nonterminals)) 
--- recursionNA rules input_set nonterminals = concat (map (createNA rules input_set) nonterminals)
+recursionNA :: [([Char], [Char])] -> [[Char]] -> [[Char]] -> Int -> [[Char]]
+--recursionNA rules input_set nonterminals = if
+--recursionNA rules input_set nonterminals = do let value1 = recursionNA (rules) (concat (map (createNA rules input_set) nonterminals)) (concat (map (createNA rules input_set) nonterminals))
+--                                              let value2 = recursionNA (rules) (value1) (value2)
+
+--                                              if value1 == value2
+--                                                then value2
+-- init counter je pocet vsech pravidel, snizovani az na nulu a pak konec
+recursionNA rules input_set nonterminals 0 = input_set
+recursionNA rules input_set nonterminals counter = recursionNA (rules) (nub(concat (map (createNA rules input_set) nonterminals))) (nub(concat (map (createNA rules input_set) nonterminals))) (counter - 1)
+--recursionNA rules input_set nonterminals = nub (concat (map (createNA rules input_set) nonterminals))
 --recursionNA rules input_set nonterminals = concat (map (createNA rules []) nonterminals)
 
 
