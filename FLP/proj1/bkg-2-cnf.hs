@@ -104,9 +104,9 @@ data CFG_t = CFG_t
     terminal_symbols :: [String],
     starting_symbol :: String,
     grammar_rules :: [([Char], [Char])]
-  } deriving (Eq, Read,Show)
+  } deriving (Eq, Read)
 
-{--
+
 instance Show CFG_t where
   show (CFG_t nonterminal_symbols terminal_symbols starting_symbol grammar_rules) =
     (intercalate "," nonterminal_symbols) ++ "\n" ++
@@ -114,7 +114,7 @@ instance Show CFG_t where
     starting_symbol ++ "\n" ++
     (unlines (map showRule grammar_rules))
 
---}
+
 parseCFG :: String -> CFG_t
 parseCFG grammar_input = CFG_t {
 nonterminal_symbols = (splitOn "," (lines (grammar_input) !! 0)),
@@ -206,7 +206,8 @@ iterateList [x] rules = removeSimpleRules x rules (recursionNA (rules) (length (
 iterateList (x:xs) rules = removeSimpleRules x rules (recursionNA (rules) (length (rules)) [x] [x]) ++ iterateList xs rules
 
 
-
+processAlgorithm1 :: CFG_t -> CFG_t
+processAlgorithm1 (CFG_t nonterminal_symbols terminal_symbols starting_symbol grammar_rules) = CFG_t nonterminal_symbols terminal_symbols starting_symbol (iterateList (nonterminal_symbols) (grammar_rules ) )
 
 main :: IO ()
 main = do
@@ -234,8 +235,8 @@ main = do
 
     print (grammar_input_transformed)
 
-    --let algorithm2 = removeSimpleRules grammar_input_transformed
-    --print (algorithm2)
+    let algorithm1 = processAlgorithm1 grammar_input_transformed
+    print (algorithm1)
 
   ------------------------------------------------------------------------
 
