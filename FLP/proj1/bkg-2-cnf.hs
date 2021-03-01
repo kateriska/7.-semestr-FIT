@@ -142,7 +142,7 @@ checkRulesSeparators :: String -> String
 checkRulesSeparators x =  printSyntaxCFGinfo (all (==True) (map (isInfixOf "->") (drop 3 (lines (x)))))
 
 
-recursionNA :: [([Char], [Char])] -> [[Char]] -> [[Char]] -> Int -> [[Char]]
+recursionNA :: [([Char], [Char])] -> Int -> [[Char]] -> [[Char]] -> [[Char]]
 --recursionNA rules input_set nonterminals = if
 --recursionNA rules input_set nonterminals = do let value1 = recursionNA (rules) (concat (map (createNA rules input_set) nonterminals)) (concat (map (createNA rules input_set) nonterminals))
 --                                              let value2 = recursionNA (rules) (value1) (value2)
@@ -150,8 +150,8 @@ recursionNA :: [([Char], [Char])] -> [[Char]] -> [[Char]] -> Int -> [[Char]]
 --                                              if value1 == value2
 --                                                then value2
 -- init counter je pocet vsech pravidel, snizovani az na nulu a pak konec
-recursionNA rules input_set nonterminals 0 = input_set
-recursionNA rules input_set nonterminals counter = recursionNA (rules) (nub(concat (map (createNA rules input_set) nonterminals))) (nub(concat (map (createNA rules input_set) nonterminals))) (counter - 1)
+recursionNA rules 0 input_set nonterminals = input_set
+recursionNA rules counter input_set nonterminals = recursionNA (rules) (counter - 1) (nub(concat (map (createNA rules input_set) nonterminals))) (nub(concat (map (createNA rules input_set) nonterminals)))
 --recursionNA rules input_set nonterminals = nub (concat (map (createNA rules input_set) nonterminals))
 --recursionNA rules input_set nonterminals = concat (map (createNA rules []) nonterminals)
 
@@ -190,7 +190,20 @@ isNontermForNA input_set rule
   | checkSimpleRule rule == True = input_set ++ [(snd rule)]
   | otherwise = input_set
 
+--removeSimpleRules(CFG_t nonterminal_symbols terminal_symbols starting_symbol grammar_rules) = map (recursionNA (rules) (length grammar_rules) ) nonterminal_symbols nonterminal_symbols
+--filterRules x = filter ((==x).fst)  rules
+changeLeftSideRule nonterminal (x,y) = (nonterminal, y)
+--concat (map filterRules ["E","F"])
 
+filterRules rules nonterminal = filter ((==nonterminal).fst)  rules
+
+removeSimpleRules nonterminal rules na_set = map (changeLeftSideRule nonterminal) (filter (\n ->  checkSimpleRule n == False) (concat (map (filterRules rules) na_set)) )
+
+--accumulateTransformedRules new_rules [] = new_rules
+--accumulateTransformedRules new_rules final_set = new_rules ++ final_set
+iterateList :: [String] -> [([Char], [Char])] -> [([Char], [Char])]
+iterateList [x] rules = removeSimpleRules x rules (recursionNA (rules) (length (rules)) [x] [x])
+iterateList (x:xs) rules = removeSimpleRules x rules (recursionNA (rules) (length (rules)) [x] [x]) ++ iterateList xs rules
 
 
 
@@ -220,6 +233,9 @@ main = do
     print (cfg_info_check)
 
     print (grammar_input_transformed)
+
+    --let algorithm2 = removeSimpleRules grammar_input_transformed
+    --print (algorithm2)
 
   ------------------------------------------------------------------------
 
