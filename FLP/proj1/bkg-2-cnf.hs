@@ -104,9 +104,9 @@ data CFG_t = CFG_t
     terminal_symbols :: [String],
     starting_symbol :: String,
     grammar_rules :: [([Char], [Char])]
-  } deriving (Eq, Read)
+  } deriving (Eq, Read, Show)
 
-
+{--
 instance Show CFG_t where
   show (CFG_t nonterminal_symbols terminal_symbols starting_symbol grammar_rules) =
     (intercalate "," nonterminal_symbols) ++ "\n" ++
@@ -114,7 +114,7 @@ instance Show CFG_t where
     starting_symbol ++ "\n" ++
     (unlines (map showRule grammar_rules))
 
-
+--}
 parseCFG :: String -> CFG_t
 parseCFG grammar_input = CFG_t {
 nonterminal_symbols = (splitOn "," (lines (grammar_input) !! 0)),
@@ -208,6 +208,27 @@ iterateList (x:xs) rules = removeSimpleRules x rules (recursionNA (rules) (lengt
 
 processAlgorithm1 :: CFG_t -> CFG_t
 processAlgorithm1 (CFG_t nonterminal_symbols terminal_symbols starting_symbol grammar_rules) = CFG_t nonterminal_symbols terminal_symbols starting_symbol (iterateList (nonterminal_symbols) (grammar_rules ) )
+
+-------------------------------------------------------------------------------------------------
+validCNFrule :: ([Char], [Char]) -> Bool
+validCNFrule rule
+  -- A -> BC
+  | head (fst rule) `elem` ['A'..'Z'] && length (fst rule) == 1 && all (==True) (map isValid (snd rule)) && length (snd rule) == 2 = True
+  -- A -> a
+  | head (fst rule) `elem` ['A'..'Z'] && length (fst rule) == 1 && head (snd rule) `elem` ['a'..'z'] && length (snd rule) == 1 = True
+  | otherwise = False
+
+-- find rules for step4 (k > 2) which are not originally in cnf form
+filterStep4 rules = filter (\m -> length ( snd m) >  2) (filter (\n -> length  (snd n) >  2) rules)
+
+--transformStep4Rule rule [] counter = [] + [(fst ("A","bbbb"), take 1 (snd ("A","bbbb")) ++ "'<" ++ drop 1 (snd("A","bbbb"))  ++ ">")]
+-- iterace od counter = delka bbbb - 1 (jedno prvni pravidlo uz musi byt na zacatku pridane) (4 - 1 = 3)
+-- rule je originalni pravidlo se kterym vstupujeme vzdy ("A", "bbbb")
+transformStep4Rule rule [] counter = [] ++ [(fst rule, take 1 (snd rule) ++ "'<" ++ drop 1 (snd rule)  ++ ">")]
+transformStep4Rule rule new_added_rules 2 = new_added_rules
+transformStep4Rule rule new_added_rules counter = transformStep4Rule (rule) (new_added_rules ++ [((drop 2 (snd (last new_added_rules))), drop 1 (take 2 (drop 2 (snd (last new_added_rules))))  ++ "'<" ++ (drop 2 (drop 2 (snd (last new_added_rules)))))]) (counter - 1)
+--transformStep4Rule rule new_added_rules counter = new_added_rules ++ ((drop 2 (snd (last [("A","b'<bbb>")]))), drop 1 (take 2 (drop 2 (snd (last [("A","b'<bbb>")]))))  ++ "'<" ++ (drop 2 (drop 2 (snd (last [("A","b'<bbb>")])))))
+
 
 main :: IO ()
 main = do
