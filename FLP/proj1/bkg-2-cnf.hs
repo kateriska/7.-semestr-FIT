@@ -223,6 +223,10 @@ filterStep4 rules = filter (\m -> length ( snd m) >  2) (filter (\n -> length  (
 validStep4Rule rule
   | length ( snd rule) >  2  = True
   | otherwise = False
+
+validStep5Rule rule
+  | length ( snd rule) ==  2  = True
+  | otherwise = False
 --transformStep4Rule rule [] counter = [] + [(fst ("A","bbbb"), take 1 (snd ("A","bbbb")) ++ "'<" ++ drop 1 (snd("A","bbbb"))  ++ ">")]
 -- iterace od counter = delka bbbb (- 1) (jedno prvni pravidlo uz musi byt na zacatku pridane) (4 - 1 = 3)
 -- rule je originalni pravidlo se kterym vstupujeme vzdy ("A", "bbbb")
@@ -247,15 +251,27 @@ checkChangedNonterminals2 nonterminals rule
   | (all (==False) (checkChangedNonterminalsSubstr (map (\n -> n ++ "'") nonterminals) (rule))) = rule
   | otherwise = ((fst rule), removeChangedNonterminalComma(snd rule) )
 
+-- A -> a'B' to A -> a'B
+-- A -> B'b' to A -> Bb'
+-- A -> b'B' to A -> b'B
+checkChangedNonterminals3 :: [String] -> ([Char], [Char]) -> ([Char], [Char])
+checkChangedNonterminals3 nonterminals rule
+  | take 2 (snd rule) `elem` (map (\n -> n ++ "'") nonterminals)  = (fst rule, take 1 (snd rule)  ++ drop 2 (snd rule))
+  | drop 2 (snd rule) `elem` (map (\n -> n ++ "'") nonterminals)  = (fst rule, take 3 (snd rule))
+
+transformStep5Rule rule = ((fst rule), take 1 (snd (rule)) ++ "'" ++ drop 1 (snd (rule)) ++  "'" )
+
+
 newCNFRules ::  [([Char], [Char])] -> [String] -> [([Char], [Char])]
 newCNFRules [x] nonterminals
  | validCNFrule x == True = [x]
  | validCNFrule x == False && validStep4Rule x == True = map (checkChangedNonterminals2 nonterminals) (map (checkChangedNonterminals1 nonterminals) (transformStep4Rule x ([] ++ [(fst x, take 1 (snd x) ++ "'<" ++ drop 1 (snd x)  ++ ">")]) (length (snd x))))
-
+ | validCNFrule x == False && validStep5Rule x == True = [checkChangedNonterminals3 (nonterminals) (transformStep5Rule x)]
  | otherwise = []
 newCNFRules (x:xs) nonterminals
  | validCNFrule x == True = [x] ++ newCNFRules xs nonterminals
  | validCNFrule x == False && validStep4Rule x == True = map (checkChangedNonterminals2 nonterminals) (map (checkChangedNonterminals1 nonterminals) (transformStep4Rule x ([] ++ [(fst x, take 1 (snd x) ++ "'<" ++ drop 1 (snd x)  ++ ">")]) (length (snd x)))) ++ newCNFRules xs nonterminals
+ | validCNFrule x == False && validStep5Rule x == True = [checkChangedNonterminals3 (nonterminals) (transformStep5Rule x)] ++ newCNFRules xs nonterminals
  | otherwise = newCNFRules xs nonterminals
 -- | validCNFrule == False && validStep4Rule == True =
 
