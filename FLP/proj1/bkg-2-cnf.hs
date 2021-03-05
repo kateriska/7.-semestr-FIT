@@ -104,9 +104,9 @@ data CFG_t = CFG_t
     terminal_symbols :: [String],
     starting_symbol :: String,
     grammar_rules :: [([Char], [Char])]
-  } deriving (Eq, Read, Show)
+  } deriving (Eq, Read)
 
-{--
+--
 instance Show CFG_t where
   show (CFG_t nonterminal_symbols terminal_symbols starting_symbol grammar_rules) =
     (intercalate "," nonterminal_symbols) ++ "\n" ++
@@ -278,10 +278,22 @@ checkChangedNonterminals3 :: [String] -> ([Char], [Char]) -> ([Char], [Char])
 checkChangedNonterminals3 nonterminals rule
   | take 2 (snd rule) `elem` (map (\n -> n ++ "'") nonterminals)  = (fst rule, take 1 (snd rule)  ++ drop 2 (snd rule))
   | drop 2 (snd rule) `elem` (map (\n -> n ++ "'") nonterminals)  = (fst rule, take 3 (snd rule))
+  | otherwise = rule
 
+newRulesStep6 :: [[Char]] -> ([Char], [Char]) -> [([Char], [Char])]
+newRulesStep6 terminals rule
+  | take 2 (snd rule) `elem` (map (\n -> n ++ "'") terminals) && drop 2 (snd rule) `elem` (map (\n -> n ++ "'") terminals) = [(take 2 (snd rule), take 1 (snd rule)), (drop 2 (snd rule), take 1 (drop 2 (snd rule)))]
+  | take 2 (snd rule) `elem` (map (\n -> n ++ "'") terminals) && (drop 2 (snd rule) `elem` (map (\n -> n ++ "'") terminals)) == False = [(take 2 (snd rule), take 1 (snd rule))]
+  | (take 2 (snd rule) `elem` (map (\n -> n ++ "'") terminals)) == False && drop 2 (snd rule) `elem` (map (\n -> n ++ "'") terminals) = [(drop 2 (snd rule), take 1 (drop 2 (snd rule)))]
+  -- specially for <Td>->Td'
+  | drop 1 (snd rule) `elem` (map (\n -> n ++ "'") terminals) = [(drop 1 (snd rule), take 1 (drop 1 (snd rule)))]
+  | otherwise = []
 transformStep5Rule :: ([Char], [Char]) -> ([Char], [Char])
 transformStep5Rule rule = ((fst rule), take 1 (snd (rule)) ++ "'" ++ drop 1 (snd (rule)) ++  "'" )
 
+transformStep6Rule :: [([Char], [Char])] -> [String] -> [([Char], [Char])]
+transformStep6Rule [x] terminals = newRulesStep6 terminals x
+transformStep6Rule (x:xs) terminals = newRulesStep6 terminals x ++ transformStep6Rule xs terminals
 
 newCNFRules ::  [([Char], [Char])] -> [String] -> [String] -> [([Char], [Char])]
 newCNFRules [x] nonterminals terminals
@@ -295,6 +307,13 @@ newCNFRules (x:xs) nonterminals terminals
  | validCNFrule x == False && validStep5Rule x == True = [checkChangedNonterminals3 (nonterminals) (transformStep5Rule x)] ++ newCNFRules xs nonterminals terminals
  | otherwise = newCNFRules xs nonterminals terminals
 -- | validCNFrule == False && validStep4Rule == True =
+
+-- final rules with Step 6 a' -> a rules
+allCNFRules :: [([Char], [Char])] -> [String] -> [String] -> [([Char], [Char])]
+allCNFRules rules nonterminals terminals = nub (newCNFRules rules nonterminals terminals ++ transformStep6Rule (newCNFRules rules nonterminals terminals) (terminals))
+
+processAlgorithm2 :: CFG_t -> CFG_t
+processAlgorithm2 (CFG_t nonterminal_symbols terminal_symbols starting_symbol grammar_rules) = CFG_t nonterminal_symbols terminal_symbols starting_symbol (allCNFRules grammar_rules nonterminal_symbols terminal_symbols)
 
 main :: IO ()
 main = do
@@ -324,6 +343,9 @@ main = do
 
     let algorithm1 = processAlgorithm1 grammar_input_transformed
     print (algorithm1)
+
+    let algorithm2 = processAlgorithm2 algorithm1
+    print (algorithm2)
 
   ------------------------------------------------------------------------
 
