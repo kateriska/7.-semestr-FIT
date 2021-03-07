@@ -312,8 +312,16 @@ newCNFRules (x:xs) nonterminals terminals
 allCNFRules :: [([Char], [Char])] -> [String] -> [String] -> [([Char], [Char])]
 allCNFRules rules nonterminals terminals = nub (newCNFRules rules nonterminals terminals ++ transformStep6Rule (newCNFRules rules nonterminals terminals) (terminals))
 
+updateNontermsSet :: [([Char], [Char])] -> [String] -> [String] -> [[Char]]
+updateNontermsSet rules nonterminals terminals = nub (map fst (allCNFRules rules nonterminals terminals) ++ nonterminals)
+
 processAlgorithm2 :: CFG_t -> CFG_t
-processAlgorithm2 (CFG_t nonterminal_symbols terminal_symbols starting_symbol grammar_rules) = CFG_t nonterminal_symbols terminal_symbols starting_symbol (allCNFRules grammar_rules nonterminal_symbols terminal_symbols)
+processAlgorithm2 (CFG_t nonterminal_symbols terminal_symbols starting_symbol grammar_rules) = CFG_t (updateNontermsSet grammar_rules nonterminal_symbols terminal_symbols) terminal_symbols starting_symbol (allCNFRules grammar_rules nonterminal_symbols terminal_symbols)
+
+processAlgorithms :: String -> CFG_t -> CFG_t
+processAlgorithms "-1" grammar_input = processAlgorithm1 grammar_input
+processAlgorithms "-2" grammar_input = processAlgorithm2 (processAlgorithm1 grammar_input)
+processAlgorithms switch grammar_input = grammar_input
 
 main :: IO ()
 main = do
@@ -339,13 +347,15 @@ main = do
     let cfg_info_check = printSyntaxCFGinfo check
     print (cfg_info_check)
 
-    print (grammar_input_transformed)
+    --print (grammar_input_transformed)
 
-    let algorithm1 = processAlgorithm1 grammar_input_transformed
-    print (algorithm1)
+    print (processAlgorithms (switch) (grammar_input_transformed))
 
-    let algorithm2 = processAlgorithm2 algorithm1
-    print (algorithm2)
+    --let algorithm1 = processAlgorithm1 grammar_input_transformed
+    --print (algorithm1)
+
+    --let algorithm2 = processAlgorithm2 algorithm1
+    --print (algorithm2)
 
   ------------------------------------------------------------------------
 
