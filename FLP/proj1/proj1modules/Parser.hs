@@ -16,10 +16,10 @@ checkArguments :: [String] -> (String, String)
 checkArguments [switch] = checkArguments [switch, ""]
 checkArguments [] = error "Error - Cant parse no arguments"
 checkArguments [switch, file]
-  | switch == "-i" = ("-i", file)
-  | switch == "-1" = ("-1", file)
-  | switch == "-2" = ("-2", file)
-  | otherwise = error "Error - Wrong switch!"
+ | switch == "-i" = ("-i", file)
+ | switch == "-1" = ("-1", file)
+ | switch == "-2" = ("-2", file)
+ | otherwise = error "Error - Wrong switch!"
 checkArguments _ = error "Error - Wrong number of arguments!"
 
 readGrammarInput :: String -> IO String
@@ -54,26 +54,26 @@ isValidNonterminal x
 
 isValidTerminal :: [String] -> Bool
 isValidTerminal x
-  | (all (`elem` ['a'..'z']) (map head x) && all (== 1) (map length x)) = True
-  | otherwise = False
+ | (all (`elem` ['a'..'z']) (map head x) && all (== 1) (map length x)) = True
+ | otherwise = False
 
 isValidStartingSymbol :: String -> Bool
 isValidStartingSymbol x
-  | length x == 1 && all (`elem` ['A'..'Z']) (x) = True
-  | otherwise = False
+ | length x == 1 && all (`elem` ['A'..'Z']) (x) = True
+ | otherwise = False
 
 -- check whether left sides of rules have only defined nonterminals from subset of [A..Z]
 isValidLeftRule :: [[Char]] -> [[Char]] -> Bool
 isValidLeftRule left_rule nonterminal_symbols
-  | all (`elem` ['A'..'Z']) (map head left_rule) && all (== 1) (map length left_rule) && all (`elem` (concat (map (take 1) nonterminal_symbols))) (map head left_rule)   = True
-  | otherwise = False
+ | all (`elem` ['A'..'Z']) (map head left_rule) && all (== 1) (map length left_rule) && all (`elem` (concat (map (take 1) nonterminal_symbols))) (map head left_rule)   = True
+ | otherwise = False
 
 -- check whether terminals and nonterinals in rules are in defined terminals and nonterminals
 isValidAlphaCharacter :: [[Char]] -> [[Char]] -> Char -> Bool
 isValidAlphaCharacter nonterminal_symbols terminal_symbols x
-  | x `elem` ['a'..'z'] && x `elem` concat (map (take 1) terminal_symbols)  = True
-  | x `elem` ['A'..'Z'] && x `elem` concat (map (take 1) nonterminal_symbols) = True
-  | otherwise  = False
+ | x `elem` ['a'..'z'] && x `elem` concat (map (take 1) terminal_symbols)  = True
+ | x `elem` ['A'..'Z'] && x `elem` concat (map (take 1) nonterminal_symbols) = True
+ | otherwise  = False
 
 isValidRightRule :: [[Char]] -> [[Char]] -> [[Char]] -> Bool
 isValidRightRule right_rule nonterminal_symbols terminal_symbols
@@ -82,8 +82,8 @@ isValidRightRule right_rule nonterminal_symbols terminal_symbols
 
 isValidGrammarRule :: [[Char]] -> [[Char]] -> [[Char]] -> [[Char]] -> Bool
 isValidGrammarRule left_rule right_rule nonterminal_symbols terminal_symbols
-  | (isValidLeftRule left_rule nonterminal_symbols == True) && (isValidRightRule right_rule nonterminal_symbols terminal_symbols == True) = True
-  | otherwise = False
+ | (isValidLeftRule left_rule nonterminal_symbols == True) && (isValidRightRule right_rule nonterminal_symbols terminal_symbols == True) = True
+ | otherwise = False
 
 
 firstRuleStartingSymbol :: [[Char]] -> [Char] -> Bool
@@ -106,10 +106,10 @@ parseCFG grammar_input = CFG_t {
 
 checkSyntaxCFG :: CFG_t -> Bool
 checkSyntaxCFG (CFG_t nonterminal_symbols terminal_symbols starting_symbol grammar_rules) =
-   if syntaxCorrect == True then True
-   else False
-     where
-       syntaxCorrect = isValidNonterminal nonterminal_symbols && isValidTerminal terminal_symbols && isValidStartingSymbol starting_symbol && isValidGrammarRule (map fst grammar_rules) (map snd grammar_rules) (nonterminal_symbols) (terminal_symbols) && firstRuleStartingSymbol (map fst grammar_rules) starting_symbol && startingSymbolInNonterminals nonterminal_symbols starting_symbol
+ if syntaxCorrect == True then True
+ else False
+ where
+   syntaxCorrect = isValidNonterminal nonterminal_symbols && isValidTerminal terminal_symbols && isValidStartingSymbol starting_symbol && isValidGrammarRule (map fst grammar_rules) (map snd grammar_rules) (nonterminal_symbols) (terminal_symbols) && firstRuleStartingSymbol (map fst grammar_rules) starting_symbol && startingSymbolInNonterminals nonterminal_symbols starting_symbol
 
 printSyntaxCFGinfo :: Bool -> String
 printSyntaxCFGinfo True = "Info - Format of CFG is correct"

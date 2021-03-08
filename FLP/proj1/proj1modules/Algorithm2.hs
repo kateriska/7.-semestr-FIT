@@ -20,10 +20,10 @@ import Algorithm1
 validCNFrule :: ([Char], [Char]) -> Bool
 validCNFrule rule
   -- A -> BC
-  | head (fst rule) `elem` ['A'..'Z'] && length (fst rule) == 1 && all (==True) (map isValid (snd rule)) && length (snd rule) == 2 = True
+ | head (fst rule) `elem` ['A'..'Z'] && length (fst rule) == 1 && all (==True) (map isValid (snd rule)) && length (snd rule) == 2 = True
   -- A -> a
-  | head (fst rule) `elem` ['A'..'Z'] && length (fst rule) == 1 && head (snd rule) `elem` ['a'..'z'] && length (snd rule) == 1 = True
-  | otherwise = False
+ | head (fst rule) `elem` ['A'..'Z'] && length (fst rule) == 1 && head (snd rule) `elem` ['a'..'z'] && length (snd rule) == 1 = True
+ | otherwise = False
 
 -- find rules for step4 (k > 2) which are not originally in cnf form
 filterStep4 :: [([Char], [Char])] -> [([Char], [Char])]
@@ -31,13 +31,13 @@ filterStep4 rules = filter (\m -> length ( snd m) >  2) (filter (\n -> length  (
 
 validStep4Rule :: ([Char], [Char]) -> Bool
 validStep4Rule rule
-  | length ( snd rule) >  2  = True
-  | otherwise = False
+ | length ( snd rule) >  2  = True
+ | otherwise = False
 
 validStep5Rule :: ([Char], [Char]) -> Bool
 validStep5Rule rule
-  | length ( snd rule) ==  2  = True
-  | otherwise = False
+ | length ( snd rule) ==  2  = True
+ | otherwise = False
 --transformStep4Rule rule [] counter = [] + [(fst ("A","bbbb"), take 1 (snd ("A","bbbb")) ++ "'<" ++ drop 1 (snd("A","bbbb"))  ++ ">")]
 -- iterace od counter = delka bbbb (- 1) (jedno prvni pravidlo uz musi byt na zacatku pridane) (4 - 1 = 3)
 -- rule je originalni pravidlo se kterym vstupujeme vzdy ("A", "bbbb")
@@ -66,32 +66,33 @@ checkChangedNonterminals1 nonterminals rule
 -- remove A' to A
 checkChangedNonterminals2 :: [[Char]] -> ([Char], [Char]) -> ([Char], [Char])
 checkChangedNonterminals2 nonterminals rule
-  | (all (==False) (checkChangedNonterminalsSubstr (map (\n -> n ++ "'") nonterminals) (rule))) = rule
-  | otherwise = ((fst rule), removeChangedNonterminalComma(snd rule) )
+ | (all (==False) (checkChangedNonterminalsSubstr (map (\n -> n ++ "'") nonterminals) (rule))) = rule
+ | otherwise = ((fst rule), removeChangedNonterminalComma(snd rule) )
 
 -- remove <a> to a'
 checkChangedTerminals :: [[Char]] -> ([Char], [Char]) -> ([Char], [Char])
 checkChangedTerminals terminals rule
-  | (all (==False) (checkChangedNonterminalsSubstr (map (\n -> "<" ++ n ++ ">") terminals) (rule))) = rule
-  | otherwise = ((fst rule), removeChangedNonterminalBrackets (snd rule) ++ "'" )
+ | (all (==False) (checkChangedNonterminalsSubstr (map (\n -> "<" ++ n ++ ">") terminals) (rule))) = rule
+ | otherwise = ((fst rule), removeChangedNonterminalBrackets (snd rule) ++ "'" )
 
 -- A -> a'B' to A -> a'B
 -- A -> B'b' to A -> Bb'
 -- A -> b'B' to A -> b'B
 checkChangedNonterminals3 :: [String] -> ([Char], [Char]) -> ([Char], [Char])
 checkChangedNonterminals3 nonterminals rule
-  | take 2 (snd rule) `elem` (map (\n -> n ++ "'") nonterminals)  = (fst rule, take 1 (snd rule)  ++ drop 2 (snd rule))
-  | drop 2 (snd rule) `elem` (map (\n -> n ++ "'") nonterminals)  = (fst rule, take 3 (snd rule))
-  | otherwise = rule
+ | take 2 (snd rule) `elem` (map (\n -> n ++ "'") nonterminals)  = (fst rule, take 1 (snd rule)  ++ drop 2 (snd rule))
+ | drop 2 (snd rule) `elem` (map (\n -> n ++ "'") nonterminals)  = (fst rule, take 3 (snd rule))
+ | otherwise = rule
 
 newRulesStep6 :: [[Char]] -> ([Char], [Char]) -> [([Char], [Char])]
 newRulesStep6 terminals rule
-  | take 2 (snd rule) `elem` (map (\n -> n ++ "'") terminals) && drop 2 (snd rule) `elem` (map (\n -> n ++ "'") terminals) = [(take 2 (snd rule), take 1 (snd rule)), (drop 2 (snd rule), take 1 (drop 2 (snd rule)))]
-  | take 2 (snd rule) `elem` (map (\n -> n ++ "'") terminals) && (drop 2 (snd rule) `elem` (map (\n -> n ++ "'") terminals)) == False = [(take 2 (snd rule), take 1 (snd rule))]
-  | (take 2 (snd rule) `elem` (map (\n -> n ++ "'") terminals)) == False && drop 2 (snd rule) `elem` (map (\n -> n ++ "'") terminals) = [(drop 2 (snd rule), take 1 (drop 2 (snd rule)))]
+ | take 2 (snd rule) `elem` (map (\n -> n ++ "'") terminals) && drop 2 (snd rule) `elem` (map (\n -> n ++ "'") terminals) = [(take 2 (snd rule), take 1 (snd rule)), (drop 2 (snd rule), take 1 (drop 2 (snd rule)))]
+ | take 2 (snd rule) `elem` (map (\n -> n ++ "'") terminals) && (drop 2 (snd rule) `elem` (map (\n -> n ++ "'") terminals)) == False = [(take 2 (snd rule), take 1 (snd rule))]
+ | (take 2 (snd rule) `elem` (map (\n -> n ++ "'") terminals)) == False && drop 2 (snd rule) `elem` (map (\n -> n ++ "'") terminals) = [(drop 2 (snd rule), take 1 (drop 2 (snd rule)))]
   -- specially for <Td>->Td'
-  | drop 1 (snd rule) `elem` (map (\n -> n ++ "'") terminals) = [(drop 1 (snd rule), take 1 (drop 1 (snd rule)))]
-  | otherwise = []
+ | drop 1 (snd rule) `elem` (map (\n -> n ++ "'") terminals) = [(drop 1 (snd rule), take 1 (drop 1 (snd rule)))]
+ | otherwise = []
+
 transformStep5Rule :: ([Char], [Char]) -> ([Char], [Char])
 transformStep5Rule rule = ((fst rule), take 1 (snd (rule)) ++ "'" ++ drop 1 (snd (rule)) ++  "'" )
 

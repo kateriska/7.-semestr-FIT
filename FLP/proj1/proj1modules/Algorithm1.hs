@@ -37,8 +37,8 @@ createNA rules input_set nonterminal  = (concat (filter (/= []) (map (isNontermF
 
 checkSimpleRule :: ([Char], [Char]) -> Bool
 checkSimpleRule rule
-  | isValidStartingSymbol (snd rule) == True = True
-  | otherwise = False
+ | isValidStartingSymbol (snd rule) == True = True
+ | otherwise = False
 
 --checkSimpleRules :: [([Char], [Char])] -> [Bool]
 --checkSimpleRules rules = map checkSimpleRule rules
@@ -57,8 +57,8 @@ isNontermForNA :: [[Char]] -> ([Char], [Char]) -> [[Char]]
 --  | checkSimpleRule rule == True = [(snd rule)]
 --  | otherwise = []
 isNontermForNA input_set rule
-  | checkSimpleRule rule == True = input_set ++ [(snd rule)]
-  | otherwise = input_set
+ | checkSimpleRule rule == True = input_set ++ [(snd rule)]
+ | otherwise = input_set
 
 --removeSimpleRules(CFG_t nonterminal_symbols terminal_symbols starting_symbol grammar_rules) = map (recursionNA (rules) (length grammar_rules) ) nonterminal_symbols nonterminal_symbols
 --filterRules x = filter ((==x).fst)  rules
