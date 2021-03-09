@@ -105,11 +105,9 @@ parseCFG grammar_input = CFG_t {
  }
 
 checkSyntaxCFG :: CFG_t -> Bool
-checkSyntaxCFG (CFG_t nonterminal_symbols terminal_symbols starting_symbol grammar_rules) =
- if syntaxCorrect == True then True
- else False
- where
-   syntaxCorrect = isValidNonterminal nonterminal_symbols && isValidTerminal terminal_symbols && isValidStartingSymbol starting_symbol && isValidGrammarRule (map fst grammar_rules) (map snd grammar_rules) (nonterminal_symbols) (terminal_symbols) && firstRuleStartingSymbol (map fst grammar_rules) starting_symbol && startingSymbolInNonterminals nonterminal_symbols starting_symbol
+checkSyntaxCFG (CFG_t nonterminal_symbols terminal_symbols starting_symbol grammar_rules)
+ | isValidNonterminal nonterminal_symbols && isValidTerminal terminal_symbols && isValidStartingSymbol starting_symbol && isValidGrammarRule (map fst grammar_rules) (map snd grammar_rules) (nonterminal_symbols) (terminal_symbols) && firstRuleStartingSymbol (map fst grammar_rules) starting_symbol && startingSymbolInNonterminals nonterminal_symbols starting_symbol = True
+ | otherwise = False 
 
 printSyntaxCFGinfo :: Bool -> String
 printSyntaxCFGinfo True = "Info - Format of CFG is correct"
