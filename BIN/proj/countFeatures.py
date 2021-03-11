@@ -2,6 +2,8 @@ import glob
 import csv
 import gzip
 import os
+import orjson
+from matplotlib import pyplot as plt
 
 chr_path = './cgp-approx14ep.chr/*'
 csv_path = './csvFiles/chrFeatures.csv'
@@ -14,6 +16,10 @@ for file in glob.glob(chr_path):
     f_out.close()
     f_in.close()
 '''
+
+xor_values = []
+mae_values = []
+
 with open(csv_path, 'w+') as csv_file:
     writer = csv.writer(csv_file)
     writer.writerow(["Name", "IDA Count", "INVA Count", "AND2 Count", "OR2 Count", "XOR2 Count", "NAND2 Count", "NOR2 Count", "XNOR2 Count", "Compressed Chr Size"])
@@ -23,6 +29,7 @@ csv_file.close()
 for file in glob.glob(chr_path):
     f_in = open(file, 'rb')
     file_substr = file.split('/')[-1] # get name of processed file
+    file_substr = file_substr[:-4] # cut .char
     f_out = gzip.open("./compressedChrFiles/" + file_substr + '.zip', 'wb')
     f_out.writelines(f_in)
     f_out.close()
@@ -51,7 +58,7 @@ for file in glob.glob(chr_path):
     nor_count = 0
     xnor_count = 0
 
-    file_substr = file.split('/')[-1] # get name of processed file
+    #file_substr = file.split('/')[-1] # get name of processed file
     #print(file_substr)
 
     readed_file = open(file, 'r')
@@ -69,7 +76,7 @@ for file in glob.glob(chr_path):
 
         cgp_gates_codes_list = cgp_gates_codes.split(')(')
         cgp_gates_codes_list = cgp_gates_codes_list[:-1]
-        print (cgp_gates_codes_list)
+        #print (cgp_gates_codes_list)
 
 
     for cgp_gates_code in cgp_gates_codes_list:
@@ -77,7 +84,7 @@ for file in glob.glob(chr_path):
         #print(used_gate_id_str)
 
         used_gate_id = int (used_gate_id_str)
-        print (used_gate_id)
+        #print (used_gate_id)
 
         if (used_gate_id == 0):
             ida_count += 1
@@ -96,8 +103,26 @@ for file in glob.glob(chr_path):
         elif (used_gate_id == 7):
             xnor_count += 1
 
+    xor_values.append(xor_count)
     with open('./csvFiles/chrFeatures.csv', 'a', newline='') as csv_file:
         writer = csv.writer(csv_file)
         writer.writerow([file_substr, ida_count, inva_count, and_count, or_count, xor_count, nand_count, nor_count, xnor_count, compressed_file_size])
 
     csv_file.close()
+
+    with open('cgp-approx14ep.json', "rb") as json_file:
+        json_data = orjson.loads(json_file.read())
+
+        #json_name_id = json_data.keys()
+        #print (json_name_id)
+
+
+        mae_value = json_data[file_substr]["mae"]
+        print(mae_value)
+        mae_values.append(mae_value)
+
+plt.figure(figsize=(15,5))
+plt.scatter(xor_values, mae_values)
+plt.xlabel('XOR count')
+plt.ylabel('Mean Absolute Error')
+plt.show()
