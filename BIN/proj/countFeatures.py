@@ -19,6 +19,8 @@ for file in glob.glob(chr_path):
 
 xor_values = []
 mae_values = []
+wce_values = []
+compressed_chr_sizes = []
 
 with open(csv_path, 'w+') as csv_file:
     writer = csv.writer(csv_file)
@@ -104,6 +106,8 @@ for file in glob.glob(chr_path):
             xnor_count += 1
 
     xor_values.append(xor_count)
+    compressed_chr_sizes.append(compressed_file_size)
+
     with open('./csvFiles/chrFeatures.csv', 'a', newline='') as csv_file:
         writer = csv.writer(csv_file)
         writer.writerow([file_substr, ida_count, inva_count, and_count, or_count, xor_count, nand_count, nor_count, xnor_count, compressed_file_size])
@@ -120,9 +124,29 @@ for file in glob.glob(chr_path):
         mae_value = json_data[file_substr][0]["mae"]
         print(mae_value)
         mae_values.append(mae_value)
+        wce_value = json_data[file_substr][0]["wce"]
+        wce_values.append(wce_value)
 
-plt.figure(figsize=(15,5))
-plt.scatter(xor_values, mae_values)
-plt.xlabel('XOR count')
-plt.ylabel('Mean Absolute Error')
+figure = plt.figure(figsize=(30, 30))
+xor_mae_plot = figure.add_subplot(2,2,1)
+xor_mae_plot.scatter(xor_values, mae_values)
+xor_mae_plot.set_xlabel('Count of Used XOR Gates by CGP')
+xor_mae_plot.set_ylabel('Mean Absolute Error')
+
+xor_wce_plot = figure.add_subplot(2,2,2)
+xor_wce_plot.scatter(xor_values, wce_values)
+xor_wce_plot.set_xlabel('Count of Used XOR Gates by CGP')
+xor_wce_plot.set_ylabel('Worst Case Error')
+
+compressed_mae_plot = figure.add_subplot(2,2,3)
+compressed_mae_plot.scatter(compressed_chr_sizes, mae_values)
+compressed_mae_plot.set_xlabel('Compressed Chr File Size')
+compressed_mae_plot.set_ylabel('Mean Absolute Error')
+
+compressed_wce_plot = figure.add_subplot(2,2,4)
+compressed_wce_plot.scatter(compressed_chr_sizes, wce_values)
+compressed_wce_plot.set_xlabel('Compressed Chr File Size')
+compressed_wce_plot.set_ylabel('Worst Case Error')
+
+
 plt.show()
