@@ -110,14 +110,14 @@ for file in glob.glob(chr_path):
 
     csv_file.close()
 
-    with open('cgp-approx14ep.json', "rb") as json_file:
+    with open('filtered_data.json', "rb") as json_file:
         json_data = orjson.loads(json_file.read())
 
         #json_name_id = json_data.keys()
         #print (json_name_id)
 
 
-        mae_value = json_data[file_substr]["mae"]
+        mae_value = json_data[file_substr][0]["mae"]
         print(mae_value)
         mae_values.append(mae_value)
 
