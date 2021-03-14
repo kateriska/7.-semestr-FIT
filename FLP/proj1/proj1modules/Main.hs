@@ -1,3 +1,10 @@
+-- Project name: bkg-2-cnf
+-- Author: Katerina Fortova
+-- Login: xforto00
+-- Year: 2020 / 2021
+
+-- Module description: Main module of program
+
 module Main (main) where
 
 import System.Environment
@@ -33,9 +40,11 @@ main = do
 
     let cfg_info_check = printSyntaxCFGinfo check
     print (cfg_info_check)
+    --------------------------------------------------------------------------------
 
     --print (grammar_input_transformed)
 
+    -- process 4.5 or 4.7 algorithm
     print (processAlgorithms (switch) (grammar_input_transformed))
 
     --let algorithm1 = processAlgorithm1 grammar_input_transformed

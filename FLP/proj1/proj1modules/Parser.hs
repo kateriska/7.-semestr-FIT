@@ -1,3 +1,10 @@
+-- Project name: bkg-2-cnf
+-- Author: Katerina Fortova
+-- Login: xforto00
+-- Year: 2020 / 2021
+
+-- Module description: Syntactic analyse of the input of program
+
 module Parser
   (checkArguments, readGrammarInput, isValid, isValidNonterminal,
   isValidTerminal, isValidStartingSymbol, isValidLeftRule, isValidAlphaCharacter,
@@ -12,6 +19,7 @@ import Data.Tuple
 
 import Types
 
+-- Decide which argument use and get name of file or figure out STDIN input
 checkArguments :: [String] -> (String, String)
 checkArguments [switch] = checkArguments [switch, ""]
 checkArguments [] = error "Error - Cant parse no arguments"
@@ -22,53 +30,42 @@ checkArguments [switch, file]
  | otherwise = error "Error - Wrong switch!"
 checkArguments _ = error "Error - Wrong number of arguments!"
 
+-- Read contents of file or STDIN
 readGrammarInput :: String -> IO String
 readGrammarInput [] = getContents
 readGrammarInput file = readFile file
 
-
-{-
-isLetter :: Char -> Bool
-isLetter c = (('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z'))
-
-checkSyntaxNonterminals :: [String] -> [String]
-checkSyntaxNonterminals [x:xs]
-  | isLetter x == False = False
-  | isLetter x == True = True
-
-checkSyntaxNonterminalsOverall :: [String] -> [String]
-checkSyntaxNonterminalsOverall xs
-  | checkSyntaxNonterminals xs == False = error "blabla"
-  | checkSyntaxNonterminals xs == True  = xs
--}
-
+-- Check whether char is uppercase alphabetic
 isValid :: Char -> Bool
 isValid x
  | x `elem` ['A'..'Z'] = True
  | otherwise = False
 
+-- Check whether nonterminal is one letter of uppercase alphabetic
 isValidNonterminal :: [String] -> Bool
 isValidNonterminal x
  | (all (`elem` ['A'..'Z']) (map head x) && all (== 1) (map length x)) = True
  | otherwise = False
 
+-- Check whether terminal is one letter of lowercase alphabetic
 isValidTerminal :: [String] -> Bool
 isValidTerminal x
  | (all (`elem` ['a'..'z']) (map head x) && all (== 1) (map length x)) = True
  | otherwise = False
 
+-- Check whether starting symbol is nonterminal of one letter uppercase alphabetic
 isValidStartingSymbol :: String -> Bool
 isValidStartingSymbol x
  | length x == 1 && all (`elem` ['A'..'Z']) (x) = True
  | otherwise = False
 
--- check whether left sides of rules have only defined nonterminals from subset of [A..Z]
+-- Check whether left sides of rules have only defined nonterminals from subset of [A..Z]
 isValidLeftRule :: [[Char]] -> [[Char]] -> Bool
 isValidLeftRule left_rule nonterminal_symbols
  | all (`elem` ['A'..'Z']) (map head left_rule) && all (== 1) (map length left_rule) && all (`elem` (concat (map (take 1) nonterminal_symbols))) (map head left_rule)   = True
  | otherwise = False
 
--- check whether terminals and nonterinals in rules are in defined terminals and nonterminals
+-- Check whether terminals and nonterminals in rules are in defined terminals and nonterminals
 isValidAlphaCharacter :: [[Char]] -> [[Char]] -> Char -> Bool
 isValidAlphaCharacter nonterminal_symbols terminal_symbols x
  | x `elem` ['a'..'z'] && x `elem` concat (map (take 1) terminal_symbols)  = True
@@ -80,22 +77,25 @@ isValidRightRule right_rule nonterminal_symbols terminal_symbols
  | all (== True) (map  (all (isValidAlphaCharacter nonterminal_symbols terminal_symbols)) right_rule) = True
  | otherwise = False
 
+-- Check correct format of left side and right side of grammar rule
 isValidGrammarRule :: [[Char]] -> [[Char]] -> [[Char]] -> [[Char]] -> Bool
 isValidGrammarRule left_rule right_rule nonterminal_symbols terminal_symbols
  | (isValidLeftRule left_rule nonterminal_symbols == True) && (isValidRightRule right_rule nonterminal_symbols terminal_symbols == True) = True
  | otherwise = False
 
-
+-- Check whether first rule has starting symbol in their left side
 firstRuleStartingSymbol :: [[Char]] -> [Char] -> Bool
 firstRuleStartingSymbol left_rule starting_symbol
  | head left_rule == starting_symbol = True
  | otherwise = False
 
+-- Check whether starting symbol is also part of set of nonterminals
 startingSymbolInNonterminals :: [[Char]] -> [Char] -> Bool
 startingSymbolInNonterminals nonterminal_symbols starting_symbol
  | head starting_symbol `elem` concat (map (take 1) nonterminal_symbols) = True
  | otherwise = False
 
+-- Transform input file or STDIN input to CFG_t structure
 parseCFG :: String -> CFG_t
 parseCFG grammar_input = CFG_t {
  nonterminal_symbols = (splitOn "," (lines (grammar_input) !! 0)),
@@ -104,18 +104,22 @@ parseCFG grammar_input = CFG_t {
  grammar_rules = map listToTuple (map (splitOn "->") (drop 3 (lines (grammar_input))))
  }
 
+-- Check all syntax analysis of input context free grammar
 checkSyntaxCFG :: CFG_t -> Bool
 checkSyntaxCFG (CFG_t nonterminal_symbols terminal_symbols starting_symbol grammar_rules)
- | isValidNonterminal nonterminal_symbols && isValidTerminal terminal_symbols && isValidStartingSymbol starting_symbol && isValidGrammarRule (map fst grammar_rules) (map snd grammar_rules) (nonterminal_symbols) (terminal_symbols) && firstRuleStartingSymbol (map fst grammar_rules) starting_symbol && startingSymbolInNonterminals nonterminal_symbols starting_symbol = True
- | otherwise = False 
+ | isValidNonterminal nonterminal_symbols && isValidTerminal terminal_symbols && isValidStartingSymbol starting_symbol && isValidGrammarRule (map fst grammar_rules) (map snd grammar_rules) (nonterminal_symbols) (terminal_symbols) && firstRuleStartingSymbol (map fst grammar_rules) starting_symbol && startingSymbolInNonterminals nonterminal_symbols starting_symbol && uniqueSymbols nonterminal_symbols && uniqueSymbols terminal_symbols && uniqueSymbols grammar_rules = True
+ | otherwise = False
 
+-- Throw error if input grammar is in wrong format
 printSyntaxCFGinfo :: Bool -> String
 printSyntaxCFGinfo True = "Info - Format of CFG is correct"
 printSyntaxCFGinfo False = error "Error - Wrong format of input CFG!"
 
- --runCorrectSwitch :: String -> String
- --runCorrectSwitch "-i" =
+-- Check only one occurence of nonterminal, terminal, rule in their lists, because duplicitations mustn't be generally on the output (via forum)
+uniqueSymbols :: (Eq a) => [a] -> Bool
+uniqueSymbols []     = True
+uniqueSymbols (x:xs) = x `notElem` xs && uniqueSymbols xs
 
- -- check whether each rule has "->" separator
+ -- Check whether each rule has "->" separator 
 checkRulesSeparators :: String -> String
 checkRulesSeparators x =  printSyntaxCFGinfo (all (==True) (map (isInfixOf "->") (drop 3 (lines (x)))))
