@@ -13,6 +13,10 @@ with open('cgp-approx14ep.json', "r") as json_file:
             "mae": json_data[item]["mae"],
             "wce": json_data[item]["wce"],
             "wce%": json_data[item]["wce%"],
+            "levels": json_data[item]["evo"]["Levels"],
+            "pdk45_area": json_data[item]["pdk45_area"],
+            "pdk45_delay": json_data[item]["pdk45_delay"],
+            "pdk45_pwr": json_data[item]["pdk45_pwr"]
 })
         #print(data)
 
