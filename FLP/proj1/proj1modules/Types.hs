@@ -20,7 +20,13 @@ listToTuple [x,y] = (x,y)
 showRule :: ([Char], [Char]) -> [Char]
 showRule (x, y) = (x ++ "->" ++ y)
 
--- Defined data type of context free grammar
+-- Defined data type of context free grammar:
+-- List on nonterminal symbols e.g.
+-- List of terminal symbols
+-- Starting nonterminal symbol
+-- List of tuples of grammar rules
+-- e.g. CFG_t {nonterminal_symbols = ["S","A","B"], terminal_symbols = ["a","b"], starting_symbol = "S", grammar_rules = [("S","aAB"),("S","BA"),("A","BBB"),("A","a"),("B","AS"),("B","b")]}
+
 data CFG_t = CFG_t
   {
     nonterminal_symbols :: [String],
@@ -29,7 +35,19 @@ data CFG_t = CFG_t
     grammar_rules :: [([Char], [Char])]
   } deriving (Eq, Read)
 
--- Instance of how should be type of CFG showed for user 
+-- Instance of how should be type of CFG showed for user
+-- e.g.
+{-
+S,A,B
+a,b
+S
+S->aAB
+S->BA
+A->BBB
+A->a
+B->AS
+B->b
+-}
 instance Show CFG_t where
   show (CFG_t nonterminal_symbols terminal_symbols starting_symbol grammar_rules) =
     (intercalate "," nonterminal_symbols) ++ "\n" ++

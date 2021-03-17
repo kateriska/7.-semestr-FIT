@@ -56,31 +56,31 @@ isValidTerminal x
 -- Check whether starting symbol is nonterminal of one letter uppercase alphabetic
 isValidStartingSymbol :: String -> Bool
 isValidStartingSymbol x
- | length x == 1 && all (`elem` ['A'..'Z']) (x) = True
+ | length x == 1 && all (`elem` ['A'..'Z']) x = True
  | otherwise = False
 
 -- Check whether left sides of rules have only defined nonterminals from subset of [A..Z]
 isValidLeftRule :: [[Char]] -> [[Char]] -> Bool
 isValidLeftRule left_rule nonterminal_symbols
- | all (`elem` ['A'..'Z']) (map head left_rule) && all (== 1) (map length left_rule) && all (`elem` (concat (map (take 1) nonterminal_symbols))) (map head left_rule)   = True
+ | all (`elem` ['A'..'Z']) (map head left_rule) && all (== 1) (map length left_rule) && all (`elem` (concat (map (take 1) nonterminal_symbols))) (map head left_rule) = True
  | otherwise = False
 
 -- Check whether terminals and nonterminals in rules are in defined terminals and nonterminals
 isValidAlphaCharacter :: [[Char]] -> [[Char]] -> Char -> Bool
 isValidAlphaCharacter nonterminal_symbols terminal_symbols x
- | x `elem` ['a'..'z'] && x `elem` concat (map (take 1) terminal_symbols)  = True
+ | x `elem` ['a'..'z'] && x `elem` concat (map (take 1) terminal_symbols) = True
  | x `elem` ['A'..'Z'] && x `elem` concat (map (take 1) nonterminal_symbols) = True
  | otherwise  = False
 
 isValidRightRule :: [[Char]] -> [[Char]] -> [[Char]] -> Bool
 isValidRightRule right_rule nonterminal_symbols terminal_symbols
- | all (== True) (map  (all (isValidAlphaCharacter nonterminal_symbols terminal_symbols)) right_rule) = True
+ | all (== True) (map (all (isValidAlphaCharacter nonterminal_symbols terminal_symbols)) right_rule) = True
  | otherwise = False
 
 -- Check correct format of left side and right side of grammar rule
 isValidGrammarRule :: [[Char]] -> [[Char]] -> [[Char]] -> [[Char]] -> Bool
 isValidGrammarRule left_rule right_rule nonterminal_symbols terminal_symbols
- | (isValidLeftRule left_rule nonterminal_symbols == True) && (isValidRightRule right_rule nonterminal_symbols terminal_symbols == True) = True
+ | isValidLeftRule left_rule nonterminal_symbols && isValidRightRule right_rule nonterminal_symbols terminal_symbols = True
  | otherwise = False
 
 -- Check whether first rule has starting symbol in their left side
@@ -98,7 +98,7 @@ startingSymbolInNonterminals nonterminal_symbols starting_symbol
 -- Transform input file or STDIN input to CFG_t structure
 parseCFG :: String -> CFG_t
 parseCFG grammar_input = CFG_t {
- nonterminal_symbols = (splitOn "," (lines (grammar_input) !! 0)),
+ nonterminal_symbols = splitOn "," (lines (grammar_input) !! 0),
  terminal_symbols = splitOn "," (lines (grammar_input) !! 1),
  starting_symbol = lines (grammar_input) !! 2,
  grammar_rules = map listToTuple (map (splitOn "->") (drop 3 (lines (grammar_input))))
@@ -117,9 +117,9 @@ printSyntaxCFGinfo False = error "Error - Wrong format of input CFG!"
 
 -- Check only one occurence of nonterminal, terminal, rule in their lists, because duplicitations mustn't be generally on the output (via forum)
 uniqueSymbols :: (Eq a) => [a] -> Bool
-uniqueSymbols []     = True
+uniqueSymbols [] = True
 uniqueSymbols (x:xs) = x `notElem` xs && uniqueSymbols xs
 
- -- Check whether each rule has "->" separator 
+ -- Check whether each rule has "->" separator
 checkRulesSeparators :: String -> String
 checkRulesSeparators x =  printSyntaxCFGinfo (all (==True) (map (isInfixOf "->") (drop 3 (lines (x)))))
