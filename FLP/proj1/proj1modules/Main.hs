@@ -19,40 +19,24 @@ import Algorithm2
 
 main :: IO ()
 main = do
-  -- simmilar for all three switches ------------------------------------------------
+
     arguments <- getArgs
 
     let (switch, file) = checkArguments arguments
-    print (switch, file)
 
     grammar_input <- readGrammarInput file
 
-    print (grammar_input)
-
+    -- check rules "->" separator before transforming to CFG data type
     let check_arrow_rules = checkRulesSeparators grammar_input
-    print (check_arrow_rules)
 
+    -- insert input to CFG structure
     let grammar_input_transformed = parseCFG grammar_input
-
-    --print (grammar_input_transformed)
-
+    -- validate syntax analysis of input CFG structure
     let check = checkSyntaxCFG grammar_input_transformed
 
     let cfg_info_check = printSyntaxCFGinfo check
-    print (cfg_info_check)
-    --------------------------------------------------------------------------------
 
-    --print (grammar_input_transformed)
-
-    -- process 4.5 or 4.7 algorithm
+    -- process 4.5 or 4.7 algorithm or only show input validated grammar
     print (processAlgorithms (switch) (grammar_input_transformed))
-
-    --let algorithm1 = processAlgorithm1 grammar_input_transformed
-    --print (algorithm1)
-
-    --let algorithm2 = processAlgorithm2 algorithm1
-    --print (algorithm2)
-
-  ------------------------------------------------------------------------
 
     return ()

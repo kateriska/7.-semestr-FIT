@@ -1,0 +1,34 @@
+Author: Katerina Fortova
+Course: Functional and Logic Programming
+Academic Year: 2020 / 21
+Project Topic: bkg-2-cnf
+
+The program is run with command:
+gmake
+./bkg-2-cnf method [input]
+where
+input is a context free grammar in right format (see project assignment and examples of tests.in in ./tests folder)
+when input is not specified algorithm loads data from stdin
+
+method could be one of these:
+-i - process syntax analysis and show input grammar
+-1 - remove simple rules from grammar (Algorithm 4.5 from TIN study material)
+-2 - transform grammar to grammar in Chomsky Norm Form (CNF) (Algorithm 4.7 from TIN study material)
+
+modules of Haskell code:
+Main.hs
+Types.hs - definition of defined structure for context free grammar and some additional helpful functions
+Parser.hs - analysis of correct format of input grammar e.g.
+            terminals from set [a..z], nonterminals from set [A..Z], correct rule separator "->", starting symbol is in nonterminals,
+            first rule of grammar should start with starting symbol, rules in format nonterminal->combination of terminals, nonterminals etc.
+Algorithm1.hs - algorithm for removing simple rules for switch -1 and also -2, because 4.7 algorithm could be applied only after 4.5 algorithm
+Algorithm2.hs - algorithm for transforming to Chomsky Norm Form for switch -2
+
+./tests folder:
+This folder contains some tests and result after applied program
+test1.in - input grammar
+test1_i.out - processing after -i command
+test1_1.out - processing after -1 command
+test1_2.out - processing after -2 command
+
+Program was tested on merlin.fit.vutbr.cz

@@ -53,4 +53,4 @@ instance Show CFG_t where
     (intercalate "," nonterminal_symbols) ++ "\n" ++
     (intercalate "," terminal_symbols) ++ "\n" ++
     starting_symbol ++ "\n" ++
-    (unlines (map showRule grammar_rules))
+    (intercalate "\n" (map showRule grammar_rules))
