@@ -35,15 +35,12 @@ matka(eva,petr).
 rodic(R,X) :- otec(R,X) ; matka(R,X).
 % Stejni rodice a sourozenci si nejsou rovni
 sourozenec(X,Y) :- rodic(R,X), rodic(R,Y) , X \= Y.
-
 sestra(X,Y) :- sourozenec(X,Y), zena(X).
 % otec rodice
 deda(X,Y) :- rodic(R,Y), otec(X,R).
-
 je_matka(X) :- matka(X,_).
 % sestra rodice
 teta(X,Y) :- rodic(R,Y), sestra(X,R).
-
 
 % Nehomogenni Seznamy:
 neprazdny([_|_]) :- true.
@@ -53,93 +50,39 @@ posledni([_|T], Res) :- posledni(T, Res).
 
 
 % Dalsi ukoly:
-% R = L2 - Result is L2
 spoj([],L2,L2).
-%spoj(List,[1,2],[333,4]).
 spoj(L2,[],L2).
 spoj(L2,L2,[]).
 
-spoj([H|R],[H|L1],L2) :- spoj(R,L1,L2).
-spoj([H|L1],L2,[H|R]) :- spoj(L1,L2,R).
-
-
-
-%spoj(List,[1,2],[333,4]).
-%spoj([H|L1],[H|C],L2) :- spoj(L1,C,L2).
-%spoj([H|C],[H|L1],L2) :- spoj(C,L1,L2)!.
-%spoj(X,[H|Y],[H|Z]) :- spoj(X,Y,Z).
-%spoj([H|X],[H|Z],Y) :- spoj(Z,Y,X).
+spoj([H|R],[H|L1],L2) :- spoj(R,L1,L2),!.
+spoj([H|L1],L2,[H|R]) :- spoj(L1,L2,R),!.
 
 obrat([],[]).
 % reverzace tail a konkatenace s head
 obrat([H|T], Res) :- obrat(T,ResT), spoj(ResT,[H],Res).
 
-% Vytvoˇrte predikat´ sluc/3, ktery slou ´ cˇ´ı dva seˇrazene seznamy do ´
-%seznamu tˇret´ıho.
-%Porovnan´ ´ı:
+% Vytvorte predikat sluc/3, ktery sloucı dva serazene seznamy do
+%seznamu tretıho.
+%Porovnanı:
 %• aritmeticke: ´ <, =<, >, >=
 %• pro jakekoliv atomy: ´ @<, @=<, @>, @>=
-sluc(L, [], L).
-sluc([], L, L).
-sluc([X|XS], [Y|YS], [Y|T]) :- X > Y,sluc([X|XS],YS,T).
-sluc([X|XS], [Y|YS], [X|T]) :- X =< Y,sluc(XS,[Y|YS],T).
+sluc([],[],[]).
+sluc(L,[],L).
+sluc([],L,L).
+sluc([X|XS],[Y|YS],[X|T]) :- X =< Y, !, sluc(XS,[Y|YS],T).
+sluc([X|XS],[Y|YS],[Y|T]) :- sluc(YS,[X|XS],T).
 
-% pro porovnani zda jsou prvky serazene
-porovnej([]).
-porovnej([_]).
-porovnej([R1,R2|RS]) :- R1 < R2, porovnej([R2|RS]).
+serad([], []).
+serad([H|T], SL) :- serad(T, Z) , sluc([H],Z,SL).
 
-
-
-mergelist([],[],[]).
-mergelist([X],[],[X]).
-mergelist([],[Y],[Y]).
-mergelist([X|List1],[Y|List2],[X|List]) :- X < Y,!,mergelist(List1,[Y|List2],List).
-mergelist([X|List1],[Y|List2],[Y|List]) :- mergelist([X|List1],List2,List).
-
-%is_sorted([]).
-%is_sorted([_]).
-%is_sorted([X,Y|T]):- mergelist(X,Y,T),is_sorted([Y|T]).
-divide(L,L1,L2):-even_odd(L,L1,L2).
-even_odd([],[],[]).
-even_odd([H|T],E,[H|O]):-even_odd(T,O,E).
-serad([],[]).     % empty list is already sorted
-serad([X],[X]).   % single element list is already sorted
-serad([H|T], SL):-
-    [H|T]=[_,_|_],divide([H|T],L1,L2),     % list with at least two elements is divided into two parts
-	serad(L1,Sorted1),serad(L2,Sorted2),  % then each part is sorted
-	sluc(Sorted1,Sorted2,SL).                  % and sorted parts are merged
-merge([],L,L).
-merge(L,[],L):-L\=[].
-merge([X|T1],[Y|T2],[X|T]):-X=<Y,merge(T1,[Y|T2],T).
-merge([X|T1],[Y|T2],[Y|T]):-X>Y,merge([X|T1],T2,T).
-
-%serad([], []).
-%serad([H|T], SL):- razeni_vkladanim([H|T],[],SL).
-razeni_vkladanim([],A,A).
-razeni_vkladanim([H|T],A,S):- sluc(H,A,N),razeni_vkladanim(T,N,S).
-
-%serad([], []).
-%serad([H|T], SL) :- sluc(H,T,SL).
-
-%split([H|T],S) :- split
-
+% mezera ma oddelovac ' '
 split([], [[]]).
 split([' '|T], [[]|R1]) :- split(T, R1).
 split([H|T], [[H|R1]|R2]) :- H \= ' ', split(T, [R1|R2]).
 
 plus(X,Y,Z) :- Z is X + Y.
 
-zipWith([],[],[]).
-zipWith([], _, []).
-zipWith(_, [], []).
-zipWith([X|T],[Y|T1],[Z|T2]):- plus(X, Y,Z), zipWith(T,T1,T2).
-
-%split([], _, [[]]).
-%split([D|T], D, [[]|T2]) :- split(T, D, T2).
-%split([H|T], D, [[H|T2]|T3]) :- dif(H, D), split(T, D, [T2|T3]).
-
-
-
-
-%plus(X,Y,Z) :- Z is X + Y.
+zipWith(_,[],[],[]).
+zipWith(_,[],_,[]).
+zipWith(_,_,[],[]).
+zipWith(P,[X|T],[Y|T1],[Z|T2]):- call(P,X,Y,Z), zipWith(P,T,T1,T2).
