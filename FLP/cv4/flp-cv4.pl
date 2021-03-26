@@ -87,6 +87,7 @@ sluc([X|XS], [Y|YS], [X|T]) :- porovnej([X|XS]),
 sluc([X|XS], [Y|YS], [Y|T]) :- porovnej([X|XS]),
                                porovnej([Y|YS]),
                                spoj([X|XS],[Y|YS],[Y|T]).
+% pro porovnani zda jsou prvky serazene 
 porovnej([]).
 porovnej([_]).
 porovnej([R1,R2|RS]) :- R1 < R2, porovnej([R2|RS]).
@@ -95,7 +96,29 @@ porovnej([R1,R2|RS]) :- R1 < R2, porovnej([R2|RS]).
 serad([], []).
 serad([H|T], SL) :- sluc(H,T,SL).
 
+%split([H|T],S) :- split
 
+%split_on_delimiter(L, D, S) :-
+%    split_on_delimiter_(L, D, R),
+%    findall(X, (member(X, R), length(X,Length), Length > 1), S).
 
+%delimeter(' ').
+split([], [[]]).
+split([' '|T], [[]|R1]) :- split(T, R1).
+split([H|T], [[H|R1]|R2]) :- H \= ' ', split(T, [R1|R2]).
 
 plus(X,Y,Z) :- Z is X + Y.
+
+zipWith([],[],[]).
+zipWith([], _, []).
+zipWith(_, [], []).
+zipWith([X|T],[Y|T1],[Z|T2]):- plus(X, Y,Z), zipWith(T,T1,T2).
+
+%split([], _, [[]]).
+%split([D|T], D, [[]|T2]) :- split(T, D, T2).
+%split([H|T], D, [[H|T2]|T3]) :- dif(H, D), split(T, D, [T2|T3]).
+
+
+
+
+%plus(X,Y,Z) :- Z is X + Y.
