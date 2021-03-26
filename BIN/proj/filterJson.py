@@ -6,7 +6,8 @@ with open('cgp-approx14ep.json', "r") as json_file:
     data = {}
     for item in json_data:
         print(item)
-
+        if ("_rcam" not in item):
+            continue
         data[item] = []
         data[item].append({
             "cells": json_data[item]["cells"],
@@ -33,4 +34,4 @@ with open('filtered_data.json', "r") as json_file:
     #print (json_name_id)
 
 
-    print(json_data['mult8_cgp14ep_ep65536_wc9_wtmrca'][0]["mae"])
+    #print(json_data['mult8_cgp14ep_ep65536_wc9_wtmrca'][0]["mae"])

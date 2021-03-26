@@ -27,16 +27,20 @@ levels_values = []
 area_values = []
 delay_values = []
 pwr_values = []
+xor_xor_xor_values = []
+and_xor_and_count_values = []
 
 with open(csv_path, 'w+') as csv_file:
     writer = csv.writer(csv_file)
-    writer.writerow(["Name", "IDA Count", "INVA Count", "AND2 Count", "OR2 Count", "XOR2 Count", "NAND2 Count", "NOR2 Count", "XNOR2 Count", "Compressed Chr Size"])
+    writer.writerow(["Name", "IDA Count", "INVA Count", "AND2 Count", "OR2 Count", "XOR2 Count", "NAND2 Count", "NOR2 Count", "XNOR2 Count", "Count of Used Cells", "Compressed Chr Size", "a XOR b XOR c XOR d Count", "(a AND b) XOR (c AND d) Count"])
 
 csv_file.close()
 
 for file in glob.glob(chr_path):
     f_in = open(file, 'rb')
     file_substr = file.split('/')[-1] # get name of processed file
+    if ("_rcam" not in file_substr):
+        continue
     file_substr = file_substr[:-4] # cut .char
     f_out = gzip.open("./compressedChrFiles/" + file_substr + '.zip', 'wb')
     f_out.writelines(f_in)
@@ -67,7 +71,7 @@ for file in glob.glob(chr_path):
     xnor_count = 0
 
     #file_substr = file.split('/')[-1] # get name of processed file
-    #print(file_substr)
+    print(file_substr)
 
     readed_file = open(file, 'r')
     lines = readed_file.readlines()
@@ -81,13 +85,38 @@ for file in glob.glob(chr_path):
         #print(line.strip())
         cgp_gates_codes = line[line.find('}') + 2:len(line)]
         #print(cgp_gates_codes)
-
+        outputs = (cgp_gates_codes[cgp_gates_codes.rfind('(') + 1:-1]).split(',')
+        outputs_list = list (map(int, outputs))
         cgp_gates_codes_list = cgp_gates_codes.split(')(')
         cgp_gates_codes_list = cgp_gates_codes_list[:-1]
         #print (cgp_gates_codes_list)
+        #print(outputs_list)
 
-
+    used_cgp_gates_codes_list = []
     for cgp_gates_code in cgp_gates_codes_list:
+        gate_id = int (cgp_gates_code[1:cgp_gates_code.find(']')])
+        #print(gate_id)
+        input1 = int (cgp_gates_code[cgp_gates_code.find(']') + 1:cgp_gates_code.find(',')])
+        #print(input1)
+        input2 = int (cgp_gates_code[cgp_gates_code.find(',') + 1:cgp_gates_code.rfind(',')])
+        #print(input2)
+
+        for cgp_gates_code2 in cgp_gates_codes_list:
+            if (cgp_gates_code == cgp_gates_code2):
+                continue
+            gate_id2 = int (cgp_gates_code2[1:cgp_gates_code2.find(']')])
+            input12 = int (cgp_gates_code2[cgp_gates_code2.find(']') + 1:cgp_gates_code2.find(',')])
+            input22 = int (cgp_gates_code2[cgp_gates_code2.find(',') + 1:cgp_gates_code2.rfind(',')])
+
+            if (input12 == gate_id or input22 == gate_id or gate_id in outputs_list):
+                used_cgp_gates_codes_list.append(cgp_gates_code)
+                break
+    used_cells_size = len(used_cgp_gates_codes_list)
+    #print("Size of used cells: " + str(len(used_cgp_gates_codes_list)))
+
+    xor_cells = []
+    and_cells = []
+    for cgp_gates_code in used_cgp_gates_codes_list:
         used_gate_id_str = cgp_gates_code[cgp_gates_code.rfind(',')+1:len(cgp_gates_code)]
         #print(used_gate_id_str)
 
@@ -100,10 +129,12 @@ for file in glob.glob(chr_path):
             inva_count += 1
         elif (used_gate_id == 2):
             and_count += 1
+            and_cells.append(cgp_gates_code)
         elif (used_gate_id == 3):
             or_count += 1
         elif (used_gate_id == 4):
             xor_count += 1
+            xor_cells.append(cgp_gates_code)
         elif (used_gate_id == 5):
             nand_count += 1
         elif (used_gate_id == 6):
@@ -111,12 +142,72 @@ for file in glob.glob(chr_path):
         elif (used_gate_id == 7):
             xnor_count += 1
 
+
+    xor_xor_xor_count = 0
+    for xor_cell in xor_cells:
+        gate_id = int (xor_cell[1:xor_cell.find(']')])
+        #print(gate_id)
+        input1 = int (xor_cell[xor_cell.find(']') + 1:xor_cell.find(',')])
+        #print(input1)
+        input2 = int (xor_cell[xor_cell.find(',') + 1:xor_cell.rfind(',')])
+        #print(input2)
+
+        for xor_cell2 in xor_cells:
+            if (xor_cell == xor_cell2):
+                continue
+            gate_id2 = int (xor_cell2[1:xor_cell2.find(']')])
+            input12 = int (xor_cell2[xor_cell2.find(']') + 1:xor_cell2.find(',')])
+            input22 = int (xor_cell2[xor_cell2.find(',') + 1:xor_cell2.rfind(',')])
+
+            if (gate_id == input12 or gate_id == input22): # a XOR b XOR c
+                for xor_cell3 in xor_cells:
+                    if (xor_cell2 == xor_cell3):
+                        continue
+                    gate_id3 = int (xor_cell3[1:xor_cell3.find(']')])
+                    input13 = int (xor_cell3[xor_cell3.find(']') + 1:xor_cell3.find(',')])
+                    input23 = int (xor_cell3[xor_cell3.find(',') + 1:xor_cell3.rfind(',')])
+
+                    if (gate_id2 == input13 or gate_id2 == input23):
+                        #print(xor_cell + "->" + xor_cell2 + "->" +xor_cell3)
+                        xor_xor_xor_count += 1
+    #print("XOR XOR XOR count " + str(xor_xor_xor_count))
+
+
+    and_xor_and_count = 0
+    for and_cell in and_cells:
+        gate_id = int (and_cell[1:and_cell.find(']')])
+        #print(gate_id)
+        input1 = int (and_cell[and_cell.find(']') + 1:and_cell.find(',')])
+        #print(input1)
+        input2 = int (and_cell[and_cell.find(',') + 1:and_cell.rfind(',')])
+        #print(input2)
+
+        for xor_cell2 in xor_cells:
+            gate_id2 = int (xor_cell2[1:xor_cell2.find(']')])
+            input12 = int (xor_cell2[xor_cell2.find(']') + 1:xor_cell2.find(',')])
+            input22 = int (xor_cell2[xor_cell2.find(',') + 1:xor_cell2.rfind(',')])
+
+            if (gate_id == input12 or gate_id == input22): # a AND b XOR
+                for and_cell3 in and_cells:
+                    if (and_cell == and_cell3):
+                        continue
+                    gate_id3 = int (and_cell3[1:and_cell3.find(']')])
+                    input13 = int (and_cell3[and_cell3.find(']') + 1:and_cell3.find(',')])
+                    input23 = int (and_cell3[and_cell3.find(',') + 1:and_cell3.rfind(',')])
+
+                    if (gate_id3 == input12 or gate_id3 == input22):
+                        #print(and_cell + "->" + xor_cell2 + "->" +and_cell3)
+                        and_xor_and_count += 1
+    #print("AND XOR AND count " + str(and_xor_and_count))
+
     xor_values.append(xor_count)
     compressed_chr_sizes.append(compressed_file_size)
+    xor_xor_xor_values.append(xor_xor_xor_count)
+    and_xor_and_count_values.append(and_xor_and_count)
 
     with open('./csvFiles/chrFeatures.csv', 'a', newline='') as csv_file:
         writer = csv.writer(csv_file)
-        writer.writerow([file_substr, ida_count, inva_count, and_count, or_count, xor_count, nand_count, nor_count, xnor_count, compressed_file_size])
+        writer.writerow([file_substr, ida_count, inva_count, and_count, or_count, xor_count, nand_count, nor_count, xnor_count, used_cells_size, compressed_file_size, xor_xor_xor_count, and_xor_and_count])
 
     csv_file.close()
 
@@ -128,7 +219,7 @@ for file in glob.glob(chr_path):
 
 
         mae_value = json_data[file_substr][0]["mae"]
-        print(mae_value)
+        #print(mae_value)
         mae_values.append(mae_value)
         wce_value = json_data[file_substr][0]["wce"]
         wce_values.append(wce_value)
@@ -149,69 +240,90 @@ for file in glob.glob(chr_path):
         levels_values.append(levels_value)
 
 figure = plt.figure(figsize=(30, 30))
-xor_mae_plot = figure.add_subplot(3,3,1)
+xor_mae_plot = figure.add_subplot(4,3,1)
 xor_mae_plot.scatter(xor_values, mae_values)
 xor_mae_plot.set_xlabel('Count of Used XOR Gates by CGP')
 xor_mae_plot.set_ylabel('Mean Absolute Error')
 r1, p1 = scipy.stats.pearsonr(xor_values, mae_values)
 print(r1)
 
-xor_wce_plot = figure.add_subplot(3,3,2)
+xor_wce_plot = figure.add_subplot(4,3,2)
 xor_wce_plot.scatter(xor_values, wce_values)
 xor_wce_plot.set_xlabel('Count of Used XOR Gates by CGP')
 xor_wce_plot.set_ylabel('Worst Case Error')
 r2, p2 = scipy.stats.pearsonr(xor_values, wce_values)
 print(r2)
 
-compressed_mae_plot = figure.add_subplot(3,3,3)
+compressed_mae_plot = figure.add_subplot(4,3,3)
 compressed_mae_plot.scatter(compressed_chr_sizes, mae_values)
 compressed_mae_plot.set_xlabel('Compressed Chr File Size')
 compressed_mae_plot.set_ylabel('Mean Absolute Error')
 r3, p3 = scipy.stats.pearsonr(compressed_chr_sizes, mae_values)
 print(r3)
 
-compressed_wce_plot = figure.add_subplot(3,3,4)
+compressed_wce_plot = figure.add_subplot(4,3,4)
 compressed_wce_plot.scatter(compressed_chr_sizes, wce_values)
 compressed_wce_plot.set_xlabel('Compressed Chr File Size')
 compressed_wce_plot.set_ylabel('Worst Case Error')
 r4, p4 = scipy.stats.pearsonr(compressed_chr_sizes, wce_values)
 print(r4)
 
-compressed_wce_percent_plot = figure.add_subplot(3,3,5)
-compressed_wce_percent_plot.scatter(xor_values, wce_percent_values)
-compressed_wce_percent_plot.set_xlabel('Compressed Chr File Size')
-compressed_wce_percent_plot.set_ylabel('Worst Case Error in %')
-r5, p5 = scipy.stats.pearsonr(xor_values, wce_percent_values)
+xor_xor_xor_mae_percent_plot = figure.add_subplot(4,3,5)
+xor_xor_xor_mae_percent_plot.scatter(xor_xor_xor_values, mae_values)
+xor_xor_xor_mae_percent_plot.set_xlabel('Count of XOR XOR XOR Subparts')
+xor_xor_xor_mae_percent_plot.set_ylabel('Mean Absolute Error')
+r5, p5 = scipy.stats.pearsonr(xor_xor_xor_values, mae_values)
 print(r5)
 
-compressed_levels_plot = figure.add_subplot(3,3,6)
-compressed_levels_plot.scatter(xor_values, levels_values)
-compressed_levels_plot.set_xlabel('Compressed Chr File Size')
-compressed_levels_plot.set_ylabel('Levels')
-r6, p6 = scipy.stats.pearsonr(xor_values, levels_values)
+and_xor_and_mae_plot = figure.add_subplot(4,3,6)
+and_xor_and_mae_plot.scatter(and_xor_and_count_values, mae_values)
+and_xor_and_mae_plot.set_xlabel('Count of AND XOR AND Subparts')
+and_xor_and_mae_plot.set_ylabel('Mean Absolute Error')
+r6, p6 = scipy.stats.pearsonr(and_xor_and_count_values, mae_values)
 print(r6)
 
 
-compressed_area_plot = figure.add_subplot(3,3,7)
-compressed_area_plot.scatter(xor_values, area_values)
-compressed_area_plot.set_xlabel('Compressed Chr File Size')
-compressed_area_plot.set_ylabel('pdk45_area')
+xor_area_plot = figure.add_subplot(4,3,7)
+xor_area_plot.scatter(xor_values, area_values)
+xor_area_plot.set_xlabel('Count of Used XOR Gates by CGP')
+xor_area_plot.set_ylabel('pdk45_area')
 r7, p7 = scipy.stats.pearsonr(xor_values, area_values)
 print(r7)
 
-compressed_delay_plot = figure.add_subplot(3,3,8)
-compressed_delay_plot.scatter(xor_values, delay_values)
-compressed_delay_plot.set_xlabel('Compressed Chr File Size')
-compressed_delay_plot.set_ylabel('pdk45_delay')
+xor_delay_plot = figure.add_subplot(4,3,8)
+xor_delay_plot.scatter(xor_values, delay_values)
+xor_delay_plot.set_xlabel('Count of Used XOR Gates by CGP')
+xor_delay_plot.set_ylabel('pdk45_delay')
 r8, p8 = scipy.stats.pearsonr(xor_values, delay_values)
 print(r8)
 
-compressed_pwr_plot = figure.add_subplot(3,3,9)
-compressed_pwr_plot.scatter(xor_values, pwr_values)
-compressed_pwr_plot.set_xlabel('Compressed Chr File Size')
-compressed_pwr_plot.set_ylabel('pdk45_pwr')
+xor_pwr_plot = figure.add_subplot(4,3,9)
+xor_pwr_plot.scatter(xor_values, pwr_values)
+xor_pwr_plot.set_xlabel('Count of Used XOR Gates by CGP')
+xor_pwr_plot.set_ylabel('pdk45_pwr')
 r9, p9 = scipy.stats.pearsonr(xor_values, pwr_values)
 print(r9)
+
+xor_xor_xor_wce_plot = figure.add_subplot(4,3,10)
+xor_xor_xor_wce_plot.scatter(xor_xor_xor_values, wce_values)
+xor_xor_xor_wce_plot.set_xlabel('Count of XOR XOR XOR Subparts')
+xor_xor_xor_wce_plot.set_ylabel('Worst Case Error')
+r10, p10 = scipy.stats.pearsonr(xor_xor_xor_values, wce_values)
+print(r10)
+
+and_xor_and_wce_plot = figure.add_subplot(4,3,11)
+and_xor_and_wce_plot.scatter(and_xor_and_count_values, wce_values)
+and_xor_and_wce_plot.set_xlabel('Count of AND XOR AND Subparts')
+and_xor_and_wce_plot.set_ylabel('Worst Case Error')
+r11, p11 = scipy.stats.pearsonr(and_xor_and_count_values, wce_values)
+print(r11)
+
+xor_pwr_plot = figure.add_subplot(4,3,12)
+xor_pwr_plot.scatter(xor_values, pwr_values)
+xor_pwr_plot.set_xlabel('Count of Used XOR Gates by CGP')
+xor_pwr_plot.set_ylabel('pdk45_pwr')
+r12, p12 = scipy.stats.pearsonr(xor_values, pwr_values)
+print(r12)
 
 plt.show()
 
@@ -225,4 +337,34 @@ plt.show()
 0.891686499037995
 0.6637750321946084
 0.9371490935825837
+
+
+
+
+1.125
+-0.5953690466407922
+-0.4605243583056319
+0.09165341582928331
+0.1067373313587608
+-0.4605243583056318
+0.6949995992005571
+0.91653132446021
+0.7124773999749886
+0.9628147078397827
+
+
+-0.6105094444846811
+-0.5192288570109109
+0.5898542809715568
+0.45469169242677027
+-0.6052006933007329
+-0.3548548845358819
+0.9419721939938519
+0.939126052167467
+0.9760709828652058
+-0.5277579870127447
+-0.25326372824607946
+0.9760709828652058
+
+
 '''
