@@ -87,22 +87,17 @@ sluc([X|XS], [Y|YS], [X|T]) :- porovnej([X|XS]),
 sluc([X|XS], [Y|YS], [Y|T]) :- porovnej([X|XS]),
                                porovnej([Y|YS]),
                                spoj([X|XS],[Y|YS],[Y|T]).
-% pro porovnani zda jsou prvky serazene 
+
+% pro porovnani zda jsou prvky serazene
 porovnej([]).
 porovnej([_]).
 porovnej([R1,R2|RS]) :- R1 < R2, porovnej([R2|RS]).
-%sluc(  ,  ,  ) :- ...
 
 serad([], []).
 serad([H|T], SL) :- sluc(H,T,SL).
 
 %split([H|T],S) :- split
 
-%split_on_delimiter(L, D, S) :-
-%    split_on_delimiter_(L, D, R),
-%    findall(X, (member(X, R), length(X,Length), Length > 1), S).
-
-%delimeter(' ').
 split([], [[]]).
 split([' '|T], [[]|R1]) :- split(T, R1).
 split([H|T], [[H|R1]|R2]) :- H \= ' ', split(T, [R1|R2]).
