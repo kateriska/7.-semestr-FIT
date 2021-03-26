@@ -81,20 +81,46 @@ obrat([H|T], Res) :- obrat(T,ResT), spoj(ResT,[H],Res).
 %• pro jakekoliv atomy: ´ @<, @=<, @>, @>=
 sluc(L, [], L).
 sluc([], L, L).
-sluc([X|XS], [Y|YS], [X|T]) :- porovnej([X|XS]),
-                               porovnej([Y|YS]),
-                               spoj([X|XS],[Y|YS],[X|T]).
-sluc([X|XS], [Y|YS], [Y|T]) :- porovnej([X|XS]),
-                               porovnej([Y|YS]),
-                               spoj([X|XS],[Y|YS],[Y|T]).
+sluc([X|XS], [Y|YS], [Y|T]) :- X > Y,sluc([X|XS],YS,T).
+sluc([X|XS], [Y|YS], [X|T]) :- X =< Y,sluc(XS,[Y|YS],T).
 
 % pro porovnani zda jsou prvky serazene
 porovnej([]).
 porovnej([_]).
 porovnej([R1,R2|RS]) :- R1 < R2, porovnej([R2|RS]).
 
-serad([], []).
-serad([H|T], SL) :- sluc(H,T,SL).
+
+
+mergelist([],[],[]).
+mergelist([X],[],[X]).
+mergelist([],[Y],[Y]).
+mergelist([X|List1],[Y|List2],[X|List]) :- X < Y,!,mergelist(List1,[Y|List2],List).
+mergelist([X|List1],[Y|List2],[Y|List]) :- mergelist([X|List1],List2,List).
+
+%is_sorted([]).
+%is_sorted([_]).
+%is_sorted([X,Y|T]):- mergelist(X,Y,T),is_sorted([Y|T]).
+divide(L,L1,L2):-even_odd(L,L1,L2).
+even_odd([],[],[]).
+even_odd([H|T],E,[H|O]):-even_odd(T,O,E).
+serad([],[]).     % empty list is already sorted
+serad([X],[X]).   % single element list is already sorted
+serad([H|T], SL):-
+    [H|T]=[_,_|_],divide([H|T],L1,L2),     % list with at least two elements is divided into two parts
+	serad(L1,Sorted1),serad(L2,Sorted2),  % then each part is sorted
+	sluc(Sorted1,Sorted2,SL).                  % and sorted parts are merged
+merge([],L,L).
+merge(L,[],L):-L\=[].
+merge([X|T1],[Y|T2],[X|T]):-X=<Y,merge(T1,[Y|T2],T).
+merge([X|T1],[Y|T2],[Y|T]):-X>Y,merge([X|T1],T2,T).
+
+%serad([], []).
+%serad([H|T], SL):- razeni_vkladanim([H|T],[],SL).
+razeni_vkladanim([],A,A).
+razeni_vkladanim([H|T],A,S):- sluc(H,A,N),razeni_vkladanim(T,N,S).
+
+%serad([], []).
+%serad([H|T], SL) :- sluc(H,T,SL).
 
 %split([H|T],S) :- split
 
