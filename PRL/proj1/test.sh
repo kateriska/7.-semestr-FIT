@@ -1,11 +1,8 @@
 #!/bin/bash
 
-#pocet cisel bud zadam nebo 16 :)
-if [ $# -lt 1 ];then
-    numbers=16;
-else
-    numbers=$1;
-fi;
+#pocet cisel 16 :)
+numbers=16;
+
 
 #preklad cpp zdrojaku
 mpic++ --prefix /usr/local/share/OpenMPI -o pms pms.cpp
