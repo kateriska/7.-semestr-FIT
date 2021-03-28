@@ -2,6 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <queue>
+#include <cmath>
 
 using namespace std;
 
@@ -11,7 +12,7 @@ void showq(queue<int16_t> gq)
 {
     queue<int16_t> g = gq;
     while (!g.empty()) {
-        cout << '\t' << g.front();
+        cout << ' ' << g.front();
         g.pop();
     }
     cout << '\n';
@@ -19,10 +20,10 @@ void showq(queue<int16_t> gq)
 
 int main(int argc, char *argv[])
 {
-   int numprocs;               //pocet procesoru
-   int myid;                   //muj rank
-   int neighnumber;            //hodnota souseda
-   int mynumber;               //moje hodnota
+   int processor_count;               //pocet procesoru
+   int my_id;                   //muj rank
+   int neighbour_num;            //hodnota souseda
+   int my_num;               //moje hodnota
    MPI_Status stat;            //struct- obsahuje kod- source, tag, error
 
    queue<int16_t> input_queue;
@@ -30,14 +31,14 @@ int main(int argc, char *argv[])
 
    //MPI INIT
    MPI_Init(&argc,&argv);                          // inicializace MPI
-   MPI_Comm_size(MPI_COMM_WORLD, &numprocs);       // zjistĂ­me, kolik procesĹŻ bÄ›ĹľĂ­
-   MPI_Comm_rank(MPI_COMM_WORLD, &myid);           // zjistĂ­me id svĂ©ho procesu
+   MPI_Comm_size(MPI_COMM_WORLD, &processor_count);       // zjistĂ­me, kolik procesĹŻ bÄ›ĹľĂ­
+   MPI_Comm_rank(MPI_COMM_WORLD, &my_id);           // zjistĂ­me id svĂ©ho procesu
 
    //NACTENI SOUBORU
    /* -proc s rankem 0 nacita vsechny hodnoty
     * -postupne rozesle jednotlive hodnoty vsem i sobe
    */
-   if(myid == 0){
+   if(my_id == 0){
        char input[]= "numbers";                          //jmeno souboru
        int16_t number;                                     //hodnota pri nacitani souboru
        int invar= 0;                                   //invariant- urcuje cislo proc, kteremu se bude posilat
@@ -47,7 +48,7 @@ int main(int argc, char *argv[])
        while(fin.good()){
            number= fin.get();
            if(!fin.good()) break;                      //nacte i eof, takze vyskocim
-           cout<<invar<<":"<<number<<endl;             //kdo dostane kere cislo
+           //cout<<invar<<":"<<number<<endl;             //kdo dostane kere cislo
            numbers_count++;
            input_queue.push(number);
            //cout << "The input queue is : ";
@@ -56,53 +57,47 @@ int main(int argc, char *argv[])
            invar++;
        }//while
        //showq(input_queue);
-       cout << numbers_count;
+       //cout << numbers_count;
        fin.close();
+
+       showq(input_queue);
+       queue<int16_t> input_queue;
+       while(fin.good()){
+           number= fin.get();
+           if(!fin.good()) break;                      //nacte i eof, takze vyskocim
+           //cout<<invar<<":"<<number<<endl;             //kdo dostane kere cislo
+           numbers_count++;
+           input_queue.push(number);
+           //cout << "The input queue is : ";
+           //showq(input_queue);
+           //MPI_Send(&number, 1, MPI_INT, myid + 1, TAG, MPI_COMM_WORLD); //buffer,velikost,typ,rank prijemce,tag,komunikacni skupina
+           invar++;
+       }//while
+       //showq(input_queue);
+       //cout << numbers_count;
+       fin.close();
+
+       //showq(input_queue);
    }//nacteni souboru
 
-   int k = 0;
-   queue<int16_t> first_merging_queue;
-   queue<int16_t> second_merging_queue;
-   bool add_to_first_merging_queue = 1;
-   int received_number;
-   while (k <= 32){
-   if (myid == 0)
-   {
-     if (input_queue.empty() == 0)
-     {
-       int number = input_queue.front();
-       cout << number;
-       input_queue.pop();
-       MPI_Send(&number, 1, MPI_INT, myid + 1, TAG, MPI_COMM_WORLD);
-       //cout << "CPU id: " << myid + 1;
-     }
-   }
-   else if (myid == 1)
-   {
-     MPI_Recv(&received_number, 1, MPI_INT, myid - 1, TAG, MPI_COMM_WORLD, &stat);
-     cout << received_number;
-     /*
-     if (add_to_first_merging_queue == 1)
-     {
-       first_merging_queue.push(received_number);
-       add_to_first_merging_queue = 0;
-     }
-     else
-     {
-       second_merging_queue.push(received_number);
-       add_to_first_merging_queue = 1;
-     }
-     */
-   }
+  int index = 0;
+  //while (index < 2*pow(2, processor_count-1) + (processor_count -1) -1)
+  {
+    if (my_id == 0)
+    {
+      if (input_queue.empty() == false)
+      {
+        my_num = input_queue.front();
+        cout << my_num << endl;
+        input_queue.pop();
+        MPI_Send(&my_num, 1, MPI_INT, my_id + 1, TAG, MPI_COMM_WORLD);
+      }
+    }
+    else
+    {
 
-   k++;
- }
-
- showq(first_merging_queue);
- showq(second_merging_queue);
-
-
-
+    }
+  }
 
 
    MPI_Finalize();
