@@ -72,6 +72,7 @@ int main(int argc, char *argv[])
        fin.close();
 
        showQueue(input_queue);
+       numbers_count = input_queue.size();
        queue<int16_t> input_queue;
        while(fin.good()){
            number= fin.get();
@@ -100,9 +101,9 @@ int main(int argc, char *argv[])
   int used_queue_pop = 1;
   queue<int16_t> first_queue;
   queue<int16_t> second_queue;
-  int end = 2 * (pow(2, processor_count - 1) + (processor_count - 1) - 1);
-  cout << "End of alg : " << end << endl;
-  while (index < 2 * (pow(2, processor_count - 1) + (processor_count - 1) - 1))
+  int sorted_numbers_order = 0;
+
+  while (index < (16 - 1) + pow(2,processor_count-1) + processor_count - 1)
   {
     if (my_id == 0)
     {
@@ -173,7 +174,9 @@ int main(int argc, char *argv[])
           {
             while (first_queue.empty() == false)
             {
-              cout << first_queue.front() << endl;
+              cout << sorted_numbers_order << ":" << first_queue.front() << endl;
+              sorted_numbers_order = sorted_numbers_order + 1;
+              //cout << "Last iter count second empty: " << index << endl;
               first_queue.pop();
             }
             break;
@@ -182,7 +185,9 @@ int main(int argc, char *argv[])
           {
             while (second_queue.empty() == false)
             {
-              cout << second_queue.front() << endl;
+              cout << sorted_numbers_order << ":" << second_queue.front() << endl;
+              sorted_numbers_order = sorted_numbers_order + 1;
+              //cout << "Last iter count first empty: " << index << endl;
               second_queue.pop();
             }
             break;
@@ -241,7 +246,8 @@ int main(int argc, char *argv[])
 
         if (my_id == processor_count - 1)
         {
-          cout << my_num << endl;
+          cout << sorted_numbers_order << ":" << my_num << endl;
+          sorted_numbers_order = sorted_numbers_order + 1;
         }
         else
         {
