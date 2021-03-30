@@ -98,7 +98,7 @@ int main(int argc, char *argv[])
   int compared_elements_count = 0;
   int numbers_to_sort_count_first_queue = pow(2, my_id-1);
   int numbers_to_sort_count_second_queue = pow(2, my_id - 1);
-  int used_queue_pop = 1;
+  int remove_other_element_queue;
   queue<int16_t> first_queue;
   queue<int16_t> second_queue;
   int sorted_numbers_order = 0;
@@ -215,21 +215,21 @@ int main(int argc, char *argv[])
             my_num = first_queue.front();
             first_queue.pop();
             numbers_to_sort_count_first_queue = numbers_to_sort_count_first_queue - 1;
-            used_queue_pop = 2;
+            remove_other_element_queue = 2;
           }
           else
           {
             my_num = second_queue.front();
             second_queue.pop();
             numbers_to_sort_count_second_queue = numbers_to_sort_count_second_queue - 1;
-            used_queue_pop = 1;
+            remove_other_element_queue = 1;
           }
 
           compared_elements_count = compared_elements_count + 1;
 
         }
 
-        else if (compared_elements_count >= pow(2, my_id) - 1 && used_queue_pop == 1)
+        else if (compared_elements_count >= pow(2, my_id) - 1 && remove_other_element_queue == 1)
         {
           my_num = first_queue.front();
           first_queue.pop();
@@ -238,7 +238,7 @@ int main(int argc, char *argv[])
           numbers_to_sort_count_first_queue = pow(2, my_id - 1);
           numbers_to_sort_count_second_queue = pow(2, my_id - 1);
         }
-        else if (compared_elements_count >= pow(2, my_id) - 1 && used_queue_pop == 2)
+        else if (compared_elements_count >= pow(2, my_id) - 1 && remove_other_element_queue == 2)
         {
           my_num = second_queue.front();
           second_queue.pop();
