@@ -102,6 +102,7 @@ int main(int argc, char *argv[])
   queue<int16_t> first_queue;
   queue<int16_t> second_queue;
   int sorted_numbers_order = 0;
+  bool finish = false;
 
   while (index < (16 - 1) + pow(2,processor_count-1) + processor_count - 1)
   {
@@ -129,7 +130,7 @@ int main(int argc, char *argv[])
         //cout << previous_processor_end << endl;
       }
 
-      int my_processor_receive_start = pow(2, my_id - 1) + my_id - 1 -1;
+      int my_processor_receive_start = pow(2, my_id - 1) + my_id - 1 - 1;
 
       if (index >= my_processor_receive_start && index < previous_processor_end)
       {
@@ -163,15 +164,16 @@ int main(int argc, char *argv[])
 
       }
 
-      int my_processor_compare_start = pow(2, my_id) + my_id -1;
-      int my_processor_compare_end = pow(2, processor_count-1) -1 + (pow(2, my_id)) + my_id;
+      int my_processor_compare_start = pow(2, my_id) + my_id - 1;
+      int my_processor_compare_end = pow(2, processor_count-1) - 1 + (pow(2, my_id)) + my_id;
 
       if (index >= my_processor_compare_start && index < my_processor_compare_end)
       {
-        if (my_id == processor_count - 1)
+        if (my_id == processor_count - 1 && (second_queue.empty() == true || first_queue.empty() == true))
         {
           if (second_queue.empty() == true)
           {
+            finish = true;
             while (first_queue.empty() == false)
             {
               cout << sorted_numbers_order << ":" << first_queue.front() << endl;
@@ -179,10 +181,11 @@ int main(int argc, char *argv[])
               //cout << "Last iter count second empty: " << index << endl;
               first_queue.pop();
             }
-            break;
+            //break;
           }
           if (first_queue.empty() == true)
           {
+            finish = true;
             while (second_queue.empty() == false)
             {
               cout << sorted_numbers_order << ":" << second_queue.front() << endl;
@@ -190,11 +193,12 @@ int main(int argc, char *argv[])
               //cout << "Last iter count first empty: " << index << endl;
               second_queue.pop();
             }
-            break;
+            //break;
           }
         }
 
-        if (compared_elements_count < pow(2, my_id) - 1)
+
+        else if (compared_elements_count < pow(2, my_id) - 1)
         {
           if (numbers_to_sort_count_first_queue == 0)
           {
@@ -244,7 +248,11 @@ int main(int argc, char *argv[])
           numbers_to_sort_count_second_queue = pow(2, my_id - 1);
         }
 
-        if (my_id == processor_count - 1)
+        if (finish == true)
+        {
+          break;
+        }
+        else if (my_id == processor_count - 1)
         {
           cout << sorted_numbers_order << ":" << my_num << endl;
           sorted_numbers_order = sorted_numbers_order + 1;
