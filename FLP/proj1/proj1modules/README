@@ -20,7 +20,7 @@ Main.hs
 Types.hs - definition of defined structure for context free grammar and some additional helpful functions
 Parser.hs - analysis of correct format of input grammar e.g.
             terminals from set [a..z], nonterminals from set [A..Z], correct rule separator "->", starting symbol is in nonterminals,
-            first rule of grammar should start with starting symbol, rules in format nonterminal->combination of terminals, nonterminals etc.
+            rules in format defined nonterminal->combination of defined terminals, nonterminals etc.
 Algorithm1.hs - algorithm for removing simple rules for switch -1 and also -2, because 4.7 algorithm could be applied only after 4.5 algorithm
 Algorithm2.hs - algorithm for transforming to Chomsky Norm Form for switch -2
 

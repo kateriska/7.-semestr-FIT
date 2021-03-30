@@ -8,7 +8,7 @@
 module Parser
   (checkArguments, readGrammarInput, isValid, isValidNonterminal,
   isValidTerminal, isValidStartingSymbol, isValidLeftRule, isValidAlphaCharacter,
-  isValidRightRule, isValidGrammarRule, firstRuleStartingSymbol, startingSymbolInNonterminals,
+  isValidRightRule, isValidGrammarRule, startingSymbolInNonterminals,
   parseCFG, checkSyntaxCFG, printSyntaxCFGinfo, checkRulesSeparators)
 
   where
@@ -83,12 +83,6 @@ isValidGrammarRule left_rule right_rule nonterminal_symbols terminal_symbols
  | isValidLeftRule left_rule nonterminal_symbols && isValidRightRule right_rule nonterminal_symbols terminal_symbols = True
  | otherwise = False
 
--- Check whether first rule has starting symbol in their left side
-firstRuleStartingSymbol :: [[Char]] -> [Char] -> Bool
-firstRuleStartingSymbol left_rule starting_symbol
- | head left_rule == starting_symbol = True
- | otherwise = False
-
 -- Check whether starting symbol is also part of set of nonterminals
 startingSymbolInNonterminals :: [[Char]] -> [Char] -> Bool
 startingSymbolInNonterminals nonterminal_symbols starting_symbol
@@ -107,7 +101,7 @@ parseCFG grammar_input = CFG_t {
 -- Check all syntax analysis of input context free grammar
 checkSyntaxCFG :: CFG_t -> Bool
 checkSyntaxCFG (CFG_t nonterminal_symbols terminal_symbols starting_symbol grammar_rules)
- | isValidNonterminal nonterminal_symbols && isValidTerminal terminal_symbols && isValidStartingSymbol starting_symbol && isValidGrammarRule (map fst grammar_rules) (map snd grammar_rules) (nonterminal_symbols) (terminal_symbols) && firstRuleStartingSymbol (map fst grammar_rules) starting_symbol && startingSymbolInNonterminals nonterminal_symbols starting_symbol && uniqueSymbols nonterminal_symbols && uniqueSymbols terminal_symbols && uniqueSymbols grammar_rules = True
+ | isValidNonterminal nonterminal_symbols && isValidTerminal terminal_symbols && isValidStartingSymbol starting_symbol && isValidGrammarRule (map fst grammar_rules) (map snd grammar_rules) (nonterminal_symbols) (terminal_symbols) && startingSymbolInNonterminals nonterminal_symbols starting_symbol && uniqueSymbols nonterminal_symbols && uniqueSymbols terminal_symbols && uniqueSymbols grammar_rules = True
  | otherwise = False
 
 -- Throw error if input grammar is in wrong format
