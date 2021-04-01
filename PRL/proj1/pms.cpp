@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
   int used_queue = 1; // will be used first queue (1) or second queue (2)
   int pushed_queue_elements = 0;
   int compared_elements_count = 0;
-  int numbers_to_sort_count_first_queue = pow(2, my_id-1);
+  int numbers_to_sort_count_first_queue = pow(2, my_id - 1);
   int numbers_to_sort_count_second_queue = pow(2, my_id - 1);
   int remove_other_element_queue;
   queue<int16_t> first_queue;
@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
   int sorted_numbers_order = 0;
   bool finish = false;
 
-  while (index < (16 - 1) + pow(2,processor_count-1) + processor_count - 1)
+  while (index < (16 - 1) + pow(2, processor_count - 1) + processor_count - 1)
   {
     if (my_id == 0)
     {
@@ -126,11 +126,11 @@ int main(int argc, char *argv[])
       }
       else
       {
-        previous_processor_end = pow(2, processor_count - 1) - 1 + pow(2, my_id - 1) + my_id - 1;
+        previous_processor_end = pow(2, processor_count - 1) + pow(2, my_id - 1) + my_id - 2;
         //cout << previous_processor_end << endl;
       }
 
-      int my_processor_receive_start = pow(2, my_id - 1) + my_id - 1 - 1;
+      int my_processor_receive_start = pow(2, my_id - 1) + my_id - 2;
 
       if (index >= my_processor_receive_start && index < previous_processor_end)
       {
@@ -165,7 +165,7 @@ int main(int argc, char *argv[])
       }
 
       int my_processor_compare_start = pow(2, my_id) + my_id - 1;
-      int my_processor_compare_end = pow(2, processor_count-1) - 1 + (pow(2, my_id)) + my_id;
+      int my_processor_compare_end = pow(2, processor_count - 1) - 1 + pow(2, my_id) + my_id;
 
       if (index >= my_processor_compare_start && index < my_processor_compare_end)
       {
@@ -181,8 +181,8 @@ int main(int argc, char *argv[])
               //cout << "Last iter count second empty: " << index << endl;
               first_queue.pop();
             }
-            //break;
           }
+
           if (first_queue.empty() == true)
           {
             finish = true;
@@ -193,12 +193,11 @@ int main(int argc, char *argv[])
               //cout << "Last iter count first empty: " << index << endl;
               second_queue.pop();
             }
-            //break;
           }
         }
 
 
-        else if (compared_elements_count < pow(2, my_id) - 1)
+        else if (compared_elements_count <= pow(2, my_id) - 2)
         {
           if (numbers_to_sort_count_first_queue == 0)
           {
@@ -229,7 +228,7 @@ int main(int argc, char *argv[])
 
         }
 
-        else if (compared_elements_count >= pow(2, my_id) - 1 && remove_other_element_queue == 1)
+        else if (compared_elements_count > pow(2, my_id) - 2 && remove_other_element_queue == 1)
         {
           my_num = first_queue.front();
           first_queue.pop();
@@ -238,7 +237,7 @@ int main(int argc, char *argv[])
           numbers_to_sort_count_first_queue = pow(2, my_id - 1);
           numbers_to_sort_count_second_queue = pow(2, my_id - 1);
         }
-        else if (compared_elements_count >= pow(2, my_id) - 1 && remove_other_element_queue == 2)
+        else if (compared_elements_count > pow(2, my_id) - 2 && remove_other_element_queue == 2)
         {
           my_num = second_queue.front();
           second_queue.pop();
