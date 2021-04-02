@@ -8,9 +8,9 @@ using namespace std;
 
 #define TAG 0
 
+// function for showing input queue to user
 void showQueue(queue<int16_t> input_queue)
 {
-    //queue<int16_t> g = gq;
     int i = 0;
     while (input_queue.empty() == false)
     {
@@ -31,66 +31,57 @@ void showQueue(queue<int16_t> input_queue)
 
 int main(int argc, char *argv[])
 {
-   int processor_count;               //pocet procesoru
-   int my_id;                   //muj rank
-   int neighbour_num;            //hodnota souseda
-   int my_num;               //moje hodnota
-   MPI_Status stat;            //struct- obsahuje kod- source, tag, error
+   int processor_count; // count of processors
+   int my_id;  // rank of my processor
+   int neighbour_num; // number which carry neighbour process
+   int my_num; // my number
+   MPI_Status stat;
 
    queue<int16_t> input_queue;
    int numbers_count = 0;
 
    //MPI INIT
-   MPI_Init(&argc,&argv);                          // inicializace MPI
-   MPI_Comm_size(MPI_COMM_WORLD, &processor_count);       // zjistĂ­me, kolik procesĹŻ bÄ›ĹľĂ­
-   MPI_Comm_rank(MPI_COMM_WORLD, &my_id);           // zjistĂ­me id svĂ©ho procesu
+   MPI_Init(&argc,&argv);
+   MPI_Comm_size(MPI_COMM_WORLD, &processor_count);
+   MPI_Comm_rank(MPI_COMM_WORLD, &my_id);
 
-   //NACTENI SOUBORU
-   /* -proc s rankem 0 nacita vsechny hodnoty
-    * -postupne rozesle jednotlive hodnoty vsem i sobe
-   */
-   if(my_id == 0){
-       char input[]= "numbers";                          //jmeno souboru
-       int16_t number;                                     //hodnota pri nacitani souboru
-       int invar= 0;                                   //invariant- urcuje cislo proc, kteremu se bude posilat
-       fstream fin;                                    //cteni ze souboru
+   // processor with id 0 read input numbers and show them on one line to STDIN
+   if (my_id == 0)
+   {
+       char input[] = "numbers";
+       int16_t number;
+       int invar = 0;
+       fstream fin;
        fin.open(input, ios::in);
 
-       while(fin.good()){
-           number= fin.get();
-           if(!fin.good()) break;                      //nacte i eof, takze vyskocim
-           //cout<<invar<<":"<<number<<endl;             //kdo dostane kere cislo
+       while(fin.good())
+       {
+           number = fin.get();
+           if (!fin.good()) break;
            numbers_count++;
            input_queue.push(number);
-           //cout << "The input queue is : ";
-           //showq(input_queue);
-           //MPI_Send(&number, 1, MPI_INT, myid + 1, TAG, MPI_COMM_WORLD); //buffer,velikost,typ,rank prijemce,tag,komunikacni skupina
            invar++;
-       }//while
-       //showq(input_queue);
-       //cout << numbers_count;
+       }
+
        fin.close();
 
-       showQueue(input_queue);
+       showQueue(input_queue); // show input number sequence on one line to user
+
+       // pushing numbers to initial queue for sorting algorithm
        numbers_count = input_queue.size();
        queue<int16_t> input_queue;
-       while(fin.good()){
+       while (fin.good())
+       {
            number= fin.get();
-           if(!fin.good()) break;                      //nacte i eof, takze vyskocim
-           //cout<<invar<<":"<<number<<endl;             //kdo dostane kere cislo
+           if (!fin.good()) break;
            numbers_count++;
            input_queue.push(number);
-           //cout << "The input queue is : ";
-           //showq(input_queue);
-           //MPI_Send(&number, 1, MPI_INT, myid + 1, TAG, MPI_COMM_WORLD); //buffer,velikost,typ,rank prijemce,tag,komunikacni skupina
            invar++;
-       }//while
-       //showq(input_queue);
-       //cout << numbers_count;
+       }
+
        fin.close();
 
-       //showq(input_queue);
-   }//nacteni souboru
+   }
 
   int index = 0;
   int used_queue = 1; // will be used first queue (1) or second queue (2)
@@ -99,14 +90,16 @@ int main(int argc, char *argv[])
   int numbers_to_sort_count_first_queue = pow(2, my_id - 1);
   int numbers_to_sort_count_second_queue = pow(2, my_id - 1);
   int remove_other_element_queue;
+
   queue<int16_t> first_queue;
   queue<int16_t> second_queue;
-  int sorted_numbers_order = 0;
-  bool finish = false;
 
+  int sorted_numbers_order = 0;
+
+  // iterate until last processor ends
   while (index < (16 - 1) + pow(2, processor_count - 1) + processor_count - 1)
   {
-    if (my_id == 0)
+    if (my_id == 0) // first processor only load input numbers and send them to next processor
     {
       if (input_queue.empty() == false)
       {
@@ -151,8 +144,9 @@ int main(int argc, char *argv[])
 
         MPI_Recv(&neighbour_num, 1, MPI_INT, my_id - 1, TAG, MPI_COMM_WORLD, &stat);
 
-        pushed_queue_elements = pushed_queue_elements + 1;
+        pushed_queue_elements = pushed_queue_elements + 1; // counting of received numbers from previous processor
 
+        // pushing numbers to correct queue
         if (used_queue == 1)
         {
           first_queue.push(neighbour_num);
@@ -167,38 +161,12 @@ int main(int argc, char *argv[])
       int my_processor_compare_start = pow(2, my_id) + my_id - 1;
       int my_processor_compare_end = pow(2, processor_count - 1) - 1 + pow(2, my_id) + my_id;
 
+      // when it is time to compare numbers with my current processor based on indexes
       if (index >= my_processor_compare_start && index < my_processor_compare_end)
       {
-        if (my_id == processor_count - 1 && (second_queue.empty() == true || first_queue.empty() == true))
+        if (compared_elements_count <= pow(2, my_id) - 2)
         {
-          if (second_queue.empty() == true)
-          {
-            finish = true;
-            while (first_queue.empty() == false)
-            {
-              cout << sorted_numbers_order << ":" << first_queue.front() << endl;
-              sorted_numbers_order = sorted_numbers_order + 1;
-              //cout << "Last iter count second empty: " << index << endl;
-              first_queue.pop();
-            }
-          }
-
-          if (first_queue.empty() == true)
-          {
-            finish = true;
-            while (second_queue.empty() == false)
-            {
-              cout << sorted_numbers_order << ":" << second_queue.front() << endl;
-              sorted_numbers_order = sorted_numbers_order + 1;
-              //cout << "Last iter count first empty: " << index << endl;
-              second_queue.pop();
-            }
-          }
-        }
-
-
-        else if (compared_elements_count <= pow(2, my_id) - 2)
-        {
+          // send right compared number to next processor
           if (numbers_to_sort_count_first_queue == 0)
           {
             my_num = second_queue.front();
@@ -224,7 +192,7 @@ int main(int argc, char *argv[])
             remove_other_element_queue = 1;
           }
 
-          compared_elements_count = compared_elements_count + 1;
+          compared_elements_count = compared_elements_count + 1; // counting number of compared numbers
 
         }
 
@@ -247,18 +215,15 @@ int main(int argc, char *argv[])
           numbers_to_sort_count_second_queue = pow(2, my_id - 1);
         }
 
-        if (finish == true)
-        {
-          break;
-        }
-        else if (my_id == processor_count - 1)
+
+        if (my_id == processor_count - 1) // last processor only prints sorted sequence to stdin
         {
           cout << sorted_numbers_order << ":" << my_num << endl;
           sorted_numbers_order = sorted_numbers_order + 1;
         }
         else
         {
-          MPI_Send(&my_num, 1, MPI_INT, my_id + 1, TAG, MPI_COMM_WORLD);
+          MPI_Send(&my_num, 1, MPI_INT, my_id + 1, TAG, MPI_COMM_WORLD); // other processors can send their number to next processor 
         }
       }
     }

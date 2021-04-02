@@ -1,20 +1,23 @@
 #!/bin/bash
 
-#pocet cisel 16 :)
+# count of numbers of input sequence is fixed to 16
 numbers=16;
 
+if [ "$(hostname)" = "merlin.fit.vutbr.cz" ]; then
+    mpic++ --prefix /usr/local/share/OpenMPI -o pms pms.cpp
+else
+    mpic++ -o pms pms.cpp
+fi
 
-#preklad cpp zdrojaku
-mpic++ --prefix /usr/local/share/OpenMPI -o pms pms.cpp
-
-
-#vyrobeni souboru s random cisly
+# file of random 16 numbers
 dd if=/dev/random bs=1 count=$numbers of=numbers status=none
 
-count=5;
+count=5; # right count of processors based on p(n) = log_2(n) + 1
 
-#spusteni
-mpirun --prefix /usr/local/share/OpenMPI -np $count pms
+if [ "$(hostname)" = "merlin.fit.vutbr.cz" ]; then
+    mpirun --prefix /usr/local/share/OpenMPI -np $count pms
+else
+    mpirun -np $count pms
+fi
 
-#uklid
 rm -f pms numbers
