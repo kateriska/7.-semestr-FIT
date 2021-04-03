@@ -1,3 +1,10 @@
+/*
+Author - Katerina Fortova (xforto00)
+Course - Parallel and Distributed Algorithms
+Project - Pipeline Merge Sort
+Academic Year - 2020 / 21
+*/
+
 #include <mpi.h>
 #include <iostream>
 #include <fstream>
@@ -12,6 +19,7 @@ using namespace std;
 void showQueue(queue<int16_t> input_queue)
 {
     int i = 0;
+
     while (input_queue.empty() == false)
     {
         if (i == 0)
@@ -112,6 +120,7 @@ int main(int argc, char *argv[])
     else
     {
       int previous_processor_end;
+      // set index when previous processor ends
       if (my_id == 1)
       {
         previous_processor_end = pow(2, processor_count - 1);
@@ -123,6 +132,7 @@ int main(int argc, char *argv[])
         //cout << previous_processor_end << endl;
       }
 
+      // set index when my processor starts receiving data
       int my_processor_receive_start = pow(2, my_id - 1) + my_id - 2;
 
       if (index >= my_processor_receive_start && index < previous_processor_end)
@@ -139,10 +149,10 @@ int main(int argc, char *argv[])
             used_queue = 1;
           }
 
-          pushed_queue_elements = 0;
+          pushed_queue_elements = 0; // clear received numbers counter
         }
 
-        MPI_Recv(&neighbour_num, 1, MPI_INT, my_id - 1, TAG, MPI_COMM_WORLD, &stat);
+        MPI_Recv(&neighbour_num, 1, MPI_INT, my_id - 1, TAG, MPI_COMM_WORLD, &stat); // receive number from previous processor
 
         pushed_queue_elements = pushed_queue_elements + 1; // counting of received numbers from previous processor
 
@@ -158,6 +168,7 @@ int main(int argc, char *argv[])
 
       }
 
+      // between these indexes my processor could compare received numbers
       int my_processor_compare_start = pow(2, my_id) + my_id - 1;
       int my_processor_compare_end = pow(2, processor_count - 1) - 1 + pow(2, my_id) + my_id;
 
@@ -167,6 +178,7 @@ int main(int argc, char *argv[])
         if (compared_elements_count <= pow(2, my_id) - 2)
         {
           // send right compared number to next processor
+          // if some queue is empty, send number of second queue right away
           if (numbers_to_sort_count_first_queue == 0)
           {
             my_num = second_queue.front();
@@ -177,19 +189,20 @@ int main(int argc, char *argv[])
             my_num = first_queue.front();
             first_queue.pop();
           }
+          // if on there are numbers on both positions in first and second queue - compare them and send smaller number to next processor
           else if (first_queue.front() < second_queue.front())
           {
+            numbers_to_sort_count_first_queue = numbers_to_sort_count_first_queue - 1; // removed number from queue, in queue is now less numbers of one
+            remove_other_element_queue = 2;
             my_num = first_queue.front();
             first_queue.pop();
-            numbers_to_sort_count_first_queue = numbers_to_sort_count_first_queue - 1;
-            remove_other_element_queue = 2;
           }
           else
           {
-            my_num = second_queue.front();
-            second_queue.pop();
             numbers_to_sort_count_second_queue = numbers_to_sort_count_second_queue - 1;
             remove_other_element_queue = 1;
+            my_num = second_queue.front();
+            second_queue.pop();
           }
 
           compared_elements_count = compared_elements_count + 1; // counting number of compared numbers
@@ -223,11 +236,11 @@ int main(int argc, char *argv[])
         }
         else
         {
-          MPI_Send(&my_num, 1, MPI_INT, my_id + 1, TAG, MPI_COMM_WORLD); // other processors can send their number to next processor 
+          MPI_Send(&my_num, 1, MPI_INT, my_id + 1, TAG, MPI_COMM_WORLD); // other processors can send their number to next processor
         }
       }
     }
-    index = index + 1;
+    index = index + 1; // increment index of loop
   }
 
 
