@@ -46,14 +46,14 @@ int main(int argc, char *argv[])
    MPI_Status stat;
 
    queue<int16_t> input_queue;
-   int numbers_count = 0;
+   int numbers_count = 0; // counting sorted numbers - whether all 16 input numbers are sorted 
 
    //MPI INIT
    MPI_Init(&argc,&argv);
    MPI_Comm_size(MPI_COMM_WORLD, &processor_count);
    MPI_Comm_rank(MPI_COMM_WORLD, &my_id);
 
-   // processor with id 0 read input numbers and show them on one line to STDIN
+   // processor with id 0 read input numbers and show them on one line to stdout
    if (my_id == 0)
    {
        char input[] = "numbers";
@@ -91,20 +91,21 @@ int main(int argc, char *argv[])
 
    }
 
-  int index = 0;
+  int index = 0; // index which shows current iteration of sorting algorithm
   int used_queue = 1; // will be used first queue (1) or second queue (2)
-  int pushed_queue_elements = 0;
-  int compared_elements_count = 0;
+  int pushed_queue_elements = 0; // counter for count of received number for some processor
+  int compared_elements_count = 0; // counter for count of compared numbers
   int numbers_to_sort_count_first_queue = pow(2, my_id - 1);
   int numbers_to_sort_count_second_queue = pow(2, my_id - 1);
   int remove_other_element_queue;
 
+  // two queues for processors based on schema of algorithm
   queue<int16_t> first_queue;
   queue<int16_t> second_queue;
 
   int sorted_numbers_order = 0;
 
-  // iterate until last processor ends
+  // iterate until last processor completely ends
   while (index < (16 - 1) + pow(2, processor_count - 1) + processor_count - 1)
   {
     if (my_id == 0) // first processor only load input numbers and send them to next processor
@@ -149,7 +150,7 @@ int main(int argc, char *argv[])
             used_queue = 1;
           }
 
-          pushed_queue_elements = 0; // clear received numbers counter
+          pushed_queue_elements = 0; // clear received numbers counter, because now we are working with the other queue
         }
 
         MPI_Recv(&neighbour_num, 1, MPI_INT, my_id - 1, TAG, MPI_COMM_WORLD, &stat); // receive number from previous processor
@@ -170,7 +171,7 @@ int main(int argc, char *argv[])
 
       // between these indexes my processor could compare received numbers
       int my_processor_compare_start = pow(2, my_id) + my_id - 1;
-      int my_processor_compare_end = pow(2, processor_count - 1) - 1 + pow(2, my_id) + my_id;
+      int my_processor_compare_end = pow(2, my_id) + my_id - 1 + pow(2, processor_count - 1);
 
       // when it is time to compare numbers with my current processor based on indexes
       if (index >= my_processor_compare_start && index < my_processor_compare_end)
@@ -229,7 +230,7 @@ int main(int argc, char *argv[])
         }
 
 
-        if (my_id == processor_count - 1) // last processor only prints sorted sequence to stdin
+        if (my_id == processor_count - 1) // last processor only prints sorted sequence to stdout
         {
           cout << sorted_numbers_order << ":" << my_num << endl;
           sorted_numbers_order = sorted_numbers_order + 1;
