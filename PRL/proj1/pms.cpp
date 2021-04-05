@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
    MPI_Status stat;
 
    queue<int16_t> input_queue;
-   int numbers_count = 0; // counting sorted numbers - whether all 16 input numbers are sorted 
+   int numbers_count = 0; // counting sorted numbers - whether all 16 input numbers are sorted
 
    //MPI INIT
    MPI_Init(&argc,&argv);
@@ -125,12 +125,10 @@ int main(int argc, char *argv[])
       if (my_id == 1)
       {
         previous_processor_end = pow(2, processor_count - 1);
-        //cout << previous_processor_end << endl;
       }
       else
       {
         previous_processor_end = pow(2, processor_count - 1) + pow(2, my_id - 1) + my_id - 2;
-        //cout << previous_processor_end << endl;
       }
 
       // set index when my processor starts receiving data
@@ -232,8 +230,9 @@ int main(int argc, char *argv[])
 
         if (my_id == processor_count - 1) // last processor only prints sorted sequence to stdout
         {
-          cout << sorted_numbers_order << ":" << my_num << endl;
-          sorted_numbers_order = sorted_numbers_order + 1;
+          //cout << sorted_numbers_order << ":" << my_num << endl;
+          cout << my_num << endl;
+          //sorted_numbers_order = sorted_numbers_order + 1;
         }
         else
         {
