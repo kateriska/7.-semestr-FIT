@@ -158,11 +158,11 @@ int main(int argc, char *argv[])
   queue<int16_t> first_queue;
   queue<int16_t> second_queue;
 
-  //int sorted_numbers_order = 0; // counting index of each sorted number
+  int sorted_numbers_order = 0; // counting index of each sorted number
 
   //double start_time = MPI_Wtime(); // start of measuring time for experiments
 
-  // iterate until last processor completely ends - 16 is a fixed count of input numbers 
+  // iterate until last processor completely ends - 16 is a fixed count of input numbers
   while (index < (16 - 1) + pow(2, processor_count - 1) + processor_count - 1)
   {
     if (my_id == 0) // first processor only load input numbers and send them to next processor
