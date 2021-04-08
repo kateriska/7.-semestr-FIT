@@ -46,7 +46,6 @@ int main(int argc, char *argv[])
    MPI_Status stat;
 
    queue<int16_t> input_queue;
-   int numbers_count = 0; // counting sorted numbers - whether all 16 input numbers are sorted
 
    //MPI INIT
    MPI_Init(&argc,&argv);
@@ -56,17 +55,17 @@ int main(int argc, char *argv[])
    // processor with id 0 read input numbers and show them on one line to stdout
    if (my_id == 0)
    {
+
        char input[] = "numbers";
        int16_t number;
        int invar = 0;
        fstream fin;
        fin.open(input, ios::in);
 
-       while(fin.good())
+       while (fin.good())
        {
            number = fin.get();
            if (!fin.good()) break;
-           numbers_count++;
            input_queue.push(number);
            invar++;
        }
@@ -76,18 +75,74 @@ int main(int argc, char *argv[])
        showQueue(input_queue); // show input number sequence on one line to user
 
        // pushing numbers to initial queue for sorting algorithm
-       numbers_count = input_queue.size();
        queue<int16_t> input_queue;
        while (fin.good())
        {
            number= fin.get();
            if (!fin.good()) break;
-           numbers_count++;
            input_queue.push(number);
            invar++;
        }
 
        fin.close();
+
+
+       /*
+       3 queues for experiment: sorted ascending/descending sequence + unsorted sequence
+       input_queue.push(1);
+       input_queue.push(2);
+       input_queue.push(3);
+       input_queue.push(4);
+       input_queue.push(5);
+       input_queue.push(6);
+       input_queue.push(7);
+       input_queue.push(8);
+       input_queue.push(9);
+       input_queue.push(10);
+       input_queue.push(11);
+       input_queue.push(12);
+       input_queue.push(13);
+       input_queue.push(14);
+       input_queue.push(15);
+       input_queue.push(16);
+
+       input_queue.push(16);
+       input_queue.push(15);
+       input_queue.push(14);
+       input_queue.push(13);
+       input_queue.push(12);
+       input_queue.push(11);
+       input_queue.push(10);
+       input_queue.push(9);
+       input_queue.push(8);
+       input_queue.push(7);
+       input_queue.push(6);
+       input_queue.push(5);
+       input_queue.push(4);
+       input_queue.push(3);
+       input_queue.push(2);
+       input_queue.push(1);
+
+       input_queue.push(5);
+       input_queue.push(12);
+       input_queue.push(15);
+       input_queue.push(1);
+       input_queue.push(14);
+       input_queue.push(13);
+       input_queue.push(9);
+       input_queue.push(16);
+       input_queue.push(6);
+       input_queue.push(8);
+       input_queue.push(10);
+       input_queue.push(11);
+       input_queue.push(4);
+       input_queue.push(3);
+       input_queue.push(2);
+       input_queue.push(7);
+
+       showQueue(input_queue);
+       */
+
 
    }
 
@@ -103,9 +158,11 @@ int main(int argc, char *argv[])
   queue<int16_t> first_queue;
   queue<int16_t> second_queue;
 
-  int sorted_numbers_order = 0;
+  //int sorted_numbers_order = 0; // counting index of each sorted number
 
-  // iterate until last processor completely ends
+  //double start_time = MPI_Wtime(); // start of measuring time for experiments
+
+  // iterate until last processor completely ends - 16 is a fixed count of input numbers 
   while (index < (16 - 1) + pow(2, processor_count - 1) + processor_count - 1)
   {
     if (my_id == 0) // first processor only load input numbers and send them to next processor
@@ -113,7 +170,6 @@ int main(int argc, char *argv[])
       if (input_queue.empty() == false)
       {
         my_num = input_queue.front();
-        //cout << my_num << endl;
         input_queue.pop();
         MPI_Send(&my_num, 1, MPI_INT, my_id + 1, TAG, MPI_COMM_WORLD);
       }
@@ -243,7 +299,13 @@ int main(int argc, char *argv[])
     index = index + 1; // increment index of loop
   }
 
-
-   MPI_Finalize();
+  //double end_time = MPI_Wtime(); // end of measuring time for experiments
+  MPI_Finalize();
+  /*
+  if(my_id == 0)
+  {
+        printf("Runtime=%f\n", end_time-start_time); // printing of total running time of sorted algorithm
+  }
+  */
    return 0;
  }
