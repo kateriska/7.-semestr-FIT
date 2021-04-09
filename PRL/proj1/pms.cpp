@@ -55,7 +55,6 @@ int main(int argc, char *argv[])
    // processor with id 0 read input numbers and show them on one line to stdout
    if (my_id == 0)
    {
-
        char input[] = "numbers";
        int16_t number;
        int invar = 0;
@@ -85,7 +84,6 @@ int main(int argc, char *argv[])
        }
 
        fin.close();
-
 
        /*
        3 queues for experiment: sorted ascending/descending sequence + unsorted sequence
@@ -142,8 +140,6 @@ int main(int argc, char *argv[])
 
        showQueue(input_queue);
        */
-
-
    }
 
   int index = 0; // index which shows current iteration of sorting algorithm
@@ -194,6 +190,7 @@ int main(int argc, char *argv[])
       {
         if (pushed_queue_elements == pow(2, my_id - 1))
         {
+          pushed_queue_elements = 0; // clear received numbers counter, because now we will work with the other queue
           // time to switch queues
           if (used_queue == 1)
           {
@@ -203,8 +200,6 @@ int main(int argc, char *argv[])
           {
             used_queue = 1;
           }
-
-          pushed_queue_elements = 0; // clear received numbers counter, because now we are working with the other queue
         }
 
         MPI_Recv(&neighbour_num, 1, MPI_INT, my_id - 1, TAG, MPI_COMM_WORLD, &stat); // receive number from previous processor
@@ -220,7 +215,6 @@ int main(int argc, char *argv[])
         {
           second_queue.push(neighbour_num);
         }
-
       }
 
       // between these indexes my processor could compare received numbers
@@ -232,6 +226,7 @@ int main(int argc, char *argv[])
       {
         if (compared_elements_count <= pow(2, my_id) - 2)
         {
+          compared_elements_count = compared_elements_count + 1; // counting number of compared numbers
           // send right compared number to next processor
           // if some queue is empty, send number of second queue right away
           if (numbers_to_sort_count_first_queue == 0)
@@ -249,6 +244,7 @@ int main(int argc, char *argv[])
           {
             numbers_to_sort_count_first_queue = numbers_to_sort_count_first_queue - 1; // removed number from queue, in queue is now less numbers of one
             remove_other_element_queue = 2;
+
             my_num = first_queue.front();
             first_queue.pop();
           }
@@ -256,12 +252,10 @@ int main(int argc, char *argv[])
           {
             numbers_to_sort_count_second_queue = numbers_to_sort_count_second_queue - 1;
             remove_other_element_queue = 1;
+
             my_num = second_queue.front();
             second_queue.pop();
           }
-
-          compared_elements_count = compared_elements_count + 1; // counting number of compared numbers
-
         }
 
         else if (compared_elements_count > pow(2, my_id) - 2 && remove_other_element_queue == 1)
@@ -269,20 +263,19 @@ int main(int argc, char *argv[])
           my_num = first_queue.front();
           first_queue.pop();
 
-          compared_elements_count = 0;
           numbers_to_sort_count_first_queue = pow(2, my_id - 1);
           numbers_to_sort_count_second_queue = pow(2, my_id - 1);
+          compared_elements_count = 0;
         }
         else if (compared_elements_count > pow(2, my_id) - 2 && remove_other_element_queue == 2)
         {
           my_num = second_queue.front();
           second_queue.pop();
 
-          compared_elements_count = 0;
           numbers_to_sort_count_first_queue = pow(2, my_id - 1);
           numbers_to_sort_count_second_queue = pow(2, my_id - 1);
+          compared_elements_count = 0;
         }
-
 
         if (my_id == processor_count - 1) // last processor only prints sorted sequence to stdout
         {
