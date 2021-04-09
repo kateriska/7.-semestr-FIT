@@ -1,7 +1,15 @@
 #!/bin/bash
 
 # count of numbers of input sequence is fixed to 16
-numbers=16;
+# run script with ./test.sh or ./test.sh 16 
+if [ $# -lt 1 ];then
+    numbers=16;
+elif [ $1 -eq 16 ];then
+    numbers=16;
+else
+  printf '%s\n' "Error - Run script with ./test.sh or ./test.sh 16!" >&2  # write error message to stderr
+  exit 1;
+fi
 
 if [ "$(hostname)" = "merlin.fit.vutbr.cz" ]; then
     mpic++ --prefix /usr/local/share/OpenMPI -o pms pms.cpp
