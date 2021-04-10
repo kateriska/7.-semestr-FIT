@@ -9,7 +9,7 @@ module Parser
   (checkArguments, readGrammarInput, isValid, isValidNonterminal,
   isValidTerminal, isValidStartingSymbol, isValidLeftRule, isValidAlphaCharacter,
   isValidRightRule, isValidGrammarRule, startingSymbolInNonterminals,
-  parseCFG, checkSyntaxCFG, printSyntaxCFGinfo, checkRulesSeparators)
+  parseCFG, checkSyntaxCFG, checkRulesSeparators)
 
   where
 import System.Environment
@@ -104,16 +104,11 @@ checkSyntaxCFG (CFG_t nonterminal_symbols terminal_symbols starting_symbol gramm
  | isValidNonterminal nonterminal_symbols && isValidTerminal terminal_symbols && isValidStartingSymbol starting_symbol && isValidGrammarRule (map fst grammar_rules) (map snd grammar_rules) (nonterminal_symbols) (terminal_symbols) && startingSymbolInNonterminals nonterminal_symbols starting_symbol && uniqueSymbols nonterminal_symbols && uniqueSymbols terminal_symbols && uniqueSymbols grammar_rules = True
  | otherwise = False
 
--- Throw error if input grammar is in wrong format
-printSyntaxCFGinfo :: Bool -> String
-printSyntaxCFGinfo True = "Info - Format of CFG is correct"
-printSyntaxCFGinfo False = error "Error - Wrong format of input CFG!"
-
 -- Check only one occurence of nonterminal, terminal, rule in their lists, because duplicitations mustn't be generally on the output (via forum)
 uniqueSymbols :: (Eq a) => [a] -> Bool
 uniqueSymbols [] = True
 uniqueSymbols (x:xs) = x `notElem` xs && uniqueSymbols xs
 
  -- Check whether each rule has "->" separator
-checkRulesSeparators :: String -> String
-checkRulesSeparators x =  printSyntaxCFGinfo (all (==True) (map (isInfixOf "->") (drop 3 (lines (x)))))
+checkRulesSeparators :: String -> Bool
+checkRulesSeparators x = all (==True) (map (isInfixOf "->") (drop 3 (lines (x))))
