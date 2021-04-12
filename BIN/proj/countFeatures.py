@@ -6,6 +6,7 @@ import orjson
 from matplotlib import pyplot as plt
 import scipy.stats
 import time
+import numpy as np
 
 start_time = time.time()
 
@@ -24,6 +25,9 @@ pwr_values = []
 xor_xor_xor_values = []
 and_xor_and_count_values = []
 
+filtered_data_list = np.genfromtxt('./csvFiles/filtered_data_list.csv', dtype=None, encoding=None)
+print(filtered_data_list)
+
 # write head of csv file
 with open(csv_path, 'w+') as csv_file:
     writer = csv.writer(csv_file)
@@ -35,9 +39,6 @@ csv_file.close()
 with open('filtered_data.json', "rb") as json_file:
     json_data = orjson.loads(json_file.read())
     for file_substr in json_data:
-        if ("_rcam" not in file_substr):
-            continue
-
         # extract metrics from json file
         mae_value = json_data[file_substr][0]["mae"]
         mae_values.append(mae_value)
@@ -225,87 +226,88 @@ with open('filtered_data.json', "rb") as json_file:
 # print duration of program
 print("--- %s seconds ---" % (time.time() - start_time))
 
-# show some interesting graphs and correlations of dependecies 
+# show some interesting graphs and correlations of dependecies
 figure = plt.figure(figsize=(30, 30))
-xor_mae_plot = figure.add_subplot(4,3,1)
+xor_mae_plot = figure.add_subplot(2,3,1)
 xor_mae_plot.scatter(xor_values, mae_values)
 xor_mae_plot.set_xlabel('Count of Used XOR Gates by CGP')
 xor_mae_plot.set_ylabel('Mean Absolute Error')
 r1, p1 = scipy.stats.pearsonr(xor_values, mae_values)
 print(r1)
 
-xor_wce_plot = figure.add_subplot(4,3,2)
+xor_wce_plot = figure.add_subplot(2,3,2)
 xor_wce_plot.scatter(xor_values, wce_values)
 xor_wce_plot.set_xlabel('Count of Used XOR Gates by CGP')
 xor_wce_plot.set_ylabel('Worst Case Error')
 r2, p2 = scipy.stats.pearsonr(xor_values, wce_values)
 print(r2)
 
-compressed_mae_plot = figure.add_subplot(4,3,3)
+compressed_mae_plot = figure.add_subplot(2,3,3)
 compressed_mae_plot.scatter(compressed_chr_sizes, mae_values)
 compressed_mae_plot.set_xlabel('Compressed Chr File Size')
 compressed_mae_plot.set_ylabel('Mean Absolute Error')
 r3, p3 = scipy.stats.pearsonr(compressed_chr_sizes, mae_values)
 print(r3)
 
-compressed_wce_plot = figure.add_subplot(4,3,4)
+compressed_wce_plot = figure.add_subplot(2,3,4)
 compressed_wce_plot.scatter(compressed_chr_sizes, wce_values)
 compressed_wce_plot.set_xlabel('Compressed Chr File Size')
 compressed_wce_plot.set_ylabel('Worst Case Error')
 r4, p4 = scipy.stats.pearsonr(compressed_chr_sizes, wce_values)
 print(r4)
 
-xor_xor_xor_mae_percent_plot = figure.add_subplot(4,3,5)
+xor_xor_xor_mae_percent_plot = figure.add_subplot(2,3,5)
 xor_xor_xor_mae_percent_plot.scatter(xor_xor_xor_values, mae_values)
 xor_xor_xor_mae_percent_plot.set_xlabel('Count of XOR XOR XOR Subparts')
 xor_xor_xor_mae_percent_plot.set_ylabel('Mean Absolute Error')
 r5, p5 = scipy.stats.pearsonr(xor_xor_xor_values, mae_values)
 print(r5)
 
-and_xor_and_mae_plot = figure.add_subplot(4,3,6)
+and_xor_and_mae_plot = figure.add_subplot(2,3,6)
 and_xor_and_mae_plot.scatter(and_xor_and_count_values, mae_values)
 and_xor_and_mae_plot.set_xlabel('Count of AND XOR AND Subparts')
 and_xor_and_mae_plot.set_ylabel('Mean Absolute Error')
 r6, p6 = scipy.stats.pearsonr(and_xor_and_count_values, mae_values)
 print(r6)
 
+figure2 = plt.figure(figsize=(30, 30))
 
-xor_area_plot = figure.add_subplot(4,3,7)
+xor_area_plot = figure2.add_subplot(2,3,1)
 xor_area_plot.scatter(xor_values, area_values)
 xor_area_plot.set_xlabel('Count of Used XOR Gates by CGP')
 xor_area_plot.set_ylabel('pdk45_area')
 r7, p7 = scipy.stats.pearsonr(xor_values, area_values)
 print(r7)
 
-xor_delay_plot = figure.add_subplot(4,3,8)
+xor_delay_plot = figure2.add_subplot(2,3,2)
 xor_delay_plot.scatter(xor_values, delay_values)
 xor_delay_plot.set_xlabel('Count of Used XOR Gates by CGP')
 xor_delay_plot.set_ylabel('pdk45_delay')
 r8, p8 = scipy.stats.pearsonr(xor_values, delay_values)
 print(r8)
 
-xor_pwr_plot = figure.add_subplot(4,3,9)
+xor_pwr_plot = figure2.add_subplot(2,3,3)
 xor_pwr_plot.scatter(xor_values, pwr_values)
 xor_pwr_plot.set_xlabel('Count of Used XOR Gates by CGP')
 xor_pwr_plot.set_ylabel('pdk45_pwr')
 r9, p9 = scipy.stats.pearsonr(xor_values, pwr_values)
 print(r9)
 
-xor_xor_xor_wce_plot = figure.add_subplot(4,3,10)
+xor_xor_xor_wce_plot = figure2.add_subplot(2,3,4)
 xor_xor_xor_wce_plot.scatter(xor_xor_xor_values, wce_values)
 xor_xor_xor_wce_plot.set_xlabel('Count of XOR XOR XOR Subparts')
 xor_xor_xor_wce_plot.set_ylabel('Worst Case Error')
 r10, p10 = scipy.stats.pearsonr(xor_xor_xor_values, wce_values)
 print(r10)
 
-and_xor_and_wce_plot = figure.add_subplot(4,3,11)
+and_xor_and_wce_plot = figure2.add_subplot(2,3,5)
 and_xor_and_wce_plot.scatter(and_xor_and_count_values, wce_values)
 and_xor_and_wce_plot.set_xlabel('Count of AND XOR AND Subparts')
 and_xor_and_wce_plot.set_ylabel('Worst Case Error')
 r11, p11 = scipy.stats.pearsonr(and_xor_and_count_values, wce_values)
 print(r11)
 
-xor_pwr_plot = figure.add_subplot(4,3,12)
+xor_pwr_plot = figure2.add_subplot(2,3,6)
 xor_pwr_plot.scatter(xor_values, pwr_values)
 xor_pwr_plot.set_xlabel('Count of Used XOR Gates by CGP')
 xor_pwr_plot.set_ylabel('pdk45_pwr')

@@ -1,8 +1,16 @@
 from random import seed
 from random import random
 import json
+import sys
 
 seed(1)
+# rcam, wtmcla, wtmcsa
+arguments_count = len(sys.argv) - 1
+used_filter = ""
+if (arguments_count == 1 and (sys.argv[1] == "rcam" or sys.argv[1] == "wtmcla" or sys.argv[1] == "wtmcsa")):
+    used_filter = sys.argv[1]
+
+f = open("./csvFiles/filtered_data_list.csv","w+")
 with open('cgp-approx14ep.json', "r") as json_file:
     json_data = json.load(json_file)
 
@@ -10,8 +18,12 @@ with open('cgp-approx14ep.json', "r") as json_file:
     i = 0
     for item in json_data:
         print(item)
-        if ("_rcam" not in item or random() < 0.5):
-            continue
+        if (used_filter != ""):
+            if (used_filter not in item or random() < 0.5):
+                continue
+        else:
+            if (random() < 0.5):
+                continue
         data[item] = []
         data[item].append({
             "cells": json_data[item]["cells"],
@@ -21,8 +33,10 @@ with open('cgp-approx14ep.json', "r") as json_file:
             "levels": json_data[item]["evo"]["Levels"],
             "pdk45_area": json_data[item]["pdk45_area"],
             "pdk45_delay": json_data[item]["pdk45_delay"],
-            "pdk45_pwr": json_data[item]["pdk45_pwr"]
-})
+            "pdk45_pwr": json_data[item]["pdk45_pwr"]})
+
+        f.write(item + "\n")
+
         #print(data)
         i = i + 1
 
@@ -30,3 +44,4 @@ with open('cgp-approx14ep.json', "r") as json_file:
         json.dump(data, outfile)
         #print(json_data['mult8_cgp14ep_ep65536_wc9_wtmrca']["mae"])
 print("Count of objects in filtered json file: " + str(i))
+f.close()
