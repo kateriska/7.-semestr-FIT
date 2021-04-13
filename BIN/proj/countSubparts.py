@@ -1,4 +1,28 @@
 
+def findO15cells(cell, o15_cells):
+    gate_id = int (cell[1:cell.find(']')])
+    print(gate_id)
+    input1 = int (cell[cell.find(']') + 1:cell.find(',')])
+    print(input1)
+    input2 = int (cell[cell.find(',') + 1:cell.rfind(',')])
+    print(input2)
+
+    inputs = [0,1,2,3,4,5,6,7]
+
+    if (input1 in inputs or input2 in inputs):
+        o15_cells.append(cell)
+        return o15_cells
+    else:
+        for used_cell in used_cgp_gates_codes_list:
+            gate_id2 = int (used_cell[1:used_cell.find(']')])
+            input12 = int (used_cell[used_cell.find(']') + 1:used_cell.find(',')])
+            input22 = int (used_cell[used_cell.find(',') + 1:used_cell.rfind(',')])
+
+            if (gate_id2 == input1 or gate_id2 == input2):
+                o15_cells.append(used_cell)
+                return findO15cells(used_cell, o15_cells)
+
+
 file = "./cgp-approx14ep.chr/mult8_cgp14ep_ep13107_wc1_3_rcam.chr"
 
 
@@ -144,3 +168,19 @@ for and_cell in and_cells:
                     print(and_cell + "->" + xor_cell2 + "->" +and_cell3)
                     and_xor_and_count += 1
 print("AND XOR AND count " + str(and_xor_and_count))
+
+o_15_output = outputs_list[0]
+
+for cell in used_cgp_gates_codes_list:
+    gate_id = int (cell[1:cell.find(']')])
+    print(gate_id)
+    input1 = int (cell[cell.find(']') + 1:cell.find(',')])
+    print(input1)
+    input2 = int (cell[cell.find(',') + 1:cell.rfind(',')])
+    print(input2)
+
+    if (gate_id == o_15_output):
+        o15_cells = findO15cells(cell, [])
+        break
+
+print(o15_cells)
