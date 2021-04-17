@@ -187,18 +187,58 @@ def metricsOriginPredict(seed, vectors_origin_dict, delay_value):
     return predicted_origin
 
 
+def writeVectors(f, g, seed_value, cells_counts):
+    if (seed_value == "rcam"):
+        class_id = 0
+    elif (seed_value == "wtm_cla"):
+        class_id = 1
+    elif (seed_value == "csam_rca"):
+        class_id = 2
+    elif (seed_value == "csam_csa"):
+        class_id = 3
+    elif (seed_value == "wtm_csa"):
+        class_id = 4
+    elif (seed_value == "wtm_rca"):
+        class_id = 5
+
+    print(cells_counts)
+    with open(f, 'a') as csv_file:
+        writer = csv.writer(csv_file)
+        writer.writerow(cells_counts)
+    csv_file.close()
+
+    with open(g, 'a') as csv_file:
+        writer = csv.writer(csv_file)
+        writer.writerow(str(class_id))
+    csv_file.close()
+
 
 start_time = time.time()
 
 chr_path = './cgp-approx14ep.chr/'
 chr_origin_path = './rodicovske8b_nasobicky/'
 csv_path = './csvFiles/chrFeatures.csv'
+f = "./csvFiles/allVectors.csv"
+g = "./csvFiles/allClasses.csv"
 
 
-# write head of csv file
+
+# write head of csv files
 with open(csv_path, 'w+') as csv_file:
     writer = csv.writer(csv_file)
     writer.writerow(["Name", "IDA Count", "INVA Count", "AND2 Count", "OR2 Count", "XOR2 Count", "NAND2 Count", "NOR2 Count", "XNOR2 Count", "Count of Used Cells", "Compressed Chr Size", "a XOR b XOR c XOR d Count", "(a AND b) XOR (c AND d) Count"])
+
+csv_file.close()
+
+with open(f, 'w+') as csv_file:
+    writer = csv.writer(csv_file)
+    writer.writerow(["IDA Count", "INVA Count", "AND2 Count", "OR2 Count", "XOR2 Count", "NAND2 Count", "NOR2 Count", "XNOR2 Count"])
+
+csv_file.close()
+
+with open(g, 'w+') as csv_file:
+    writer = csv.writer(csv_file)
+    writer.writerow(["Class of Multiplier Origin"])
 
 csv_file.close()
 
@@ -265,6 +305,17 @@ with open('origin_data.json', "rb") as json_file:
         # count of subparts (a AND b) XOR (c AND d)
         and_xor_and_count = getAndXorAndCount(xor_cells, and_cells)
 
+        cells_counts = list()
+        cells_counts.append(ida_count)
+        cells_counts.append(inva_count)
+        cells_counts.append(and_count)
+        cells_counts.append(or_count)
+        cells_counts.append(xor_count)
+        cells_counts.append(nand_count)
+        cells_counts.append(nor_count)
+        cells_counts.append(xnor_count)
+
+        writeVectors(f,g,seed_value,cells_counts)
         # write info to csv file
         with open('./csvFiles/chrFeatures.csv', 'a', newline='') as csv_file:
             writer = csv.writer(csv_file)
@@ -331,6 +382,18 @@ for file in glob.glob("./rodicovske8b_nasobicky/*"):
 
     # count of subparts (a AND b) XOR (c AND d)
     and_xor_and_count = getAndXorAndCount(xor_cells, and_cells)
+
+    cells_counts = list()
+    cells_counts.append(ida_count)
+    cells_counts.append(inva_count)
+    cells_counts.append(and_count)
+    cells_counts.append(or_count)
+    cells_counts.append(xor_count)
+    cells_counts.append(nand_count)
+    cells_counts.append(nor_count)
+    cells_counts.append(xnor_count)
+
+    writeVectors(f,g,seed_value,cells_counts)
 
     # write info to csv file
     with open('./csvFiles/chrFeatures.csv', 'a', newline='') as csv_file:
@@ -430,6 +493,18 @@ with open('filtered_data.json', "rb") as json_file:
         compressed_chr_sizes.append(compressed_file_size)
         xor_xor_xor_values.append(xor_xor_xor_count)
         and_xor_and_count_values.append(and_xor_and_count)
+
+        cells_counts = list()
+        cells_counts.append(ida_count)
+        cells_counts.append(inva_count)
+        cells_counts.append(and_count)
+        cells_counts.append(or_count)
+        cells_counts.append(xor_count)
+        cells_counts.append(nand_count)
+        cells_counts.append(nor_count)
+        cells_counts.append(xnor_count)
+
+        writeVectors(f,g,seed_value,cells_counts)
 
         # write info to csv file
         with open('./csvFiles/chrFeatures.csv', 'a', newline='') as csv_file:
