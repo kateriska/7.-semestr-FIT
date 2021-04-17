@@ -191,6 +191,7 @@ def metricsOriginPredict(seed, vectors_origin_dict, delay_value):
 start_time = time.time()
 
 chr_path = './cgp-approx14ep.chr/'
+chr_origin_path = './rodicovske8b_nasobicky/'
 csv_path = './csvFiles/chrFeatures.csv'
 
 
@@ -203,7 +204,7 @@ csv_file.close()
 
 o15_origin_dict = {}
 vectors_origin_dict = {}
-# iterate through json file with three origin multipliers
+# iterate through json file with three origin multipliers which are in original json
 with open('origin_data.json', "rb") as json_file:
     json_data = orjson.loads(json_file.read())
     for file_substr in json_data:
@@ -271,9 +272,76 @@ with open('origin_data.json', "rb") as json_file:
 
         csv_file.close()
 
-#print(o15_origin_dict)
-#print(vectors_origin_dict)
 
+
+for file in glob.glob("./rodicovske8b_nasobicky/*"):
+    file_substr = file.split('/')[-1] # get name of processed file
+    file_substr_without_chr = file_substr[0:file_substr.rfind('.')]
+    compressed_file_size = getCompressedSize(chr_origin_path, file_substr_without_chr)
+
+    #file_substr = file.split('/')[-1] # get name of processed file
+    print(file_substr)
+
+    # open chr file for computing features based on chr file
+    readed_file = open(file, 'r')
+    lines = readed_file.readlines()
+
+    count = 0
+    # Strips the newline character
+    for line in lines:
+        count += 1
+        if (line[0:1] == "#"):
+            continue
+        cgp_gates_codes = line[line.find('}') + 2:len(line)]
+        outputs = (cgp_gates_codes[cgp_gates_codes.rfind('(') + 1:-1]).split(',')
+        outputs_list = list (map(int, outputs))
+        cgp_gates_codes_list = cgp_gates_codes.split(')(')
+        cgp_gates_codes_list = cgp_gates_codes_list[:-1]
+
+    # find used cells by cgp
+    used_cgp_gates_codes_list = findUsedCells(cgp_gates_codes_list)
+
+    used_cells_size = len(used_cgp_gates_codes_list)
+    #print("Size of used cells: " + str(len(used_cgp_gates_codes_list)))
+
+    o_15_output = outputs_list[0]
+    for cell in used_cgp_gates_codes_list:
+        gate_id, input1, input2 = parseCellIO(cell)
+
+        if (gate_id == o_15_output):
+            o15_cells = findO15cells(cell, [])
+            break
+    #print(o15_cells)
+
+    xor_cells = []
+    and_cells = []
+
+    seed_value = file_substr[2:file_substr.find('-')]
+    print(seed_value)
+    # find count of used types of cells
+    ida_count, inva_count, and_count, or_count, xor_count, nand_count, nor_count, xnor_count, xor_cells, and_cells = findUsedCellsTypes(used_cgp_gates_codes_list)
+
+    # find count of used types of cells for O15 output and add this vector to origin dict
+    ida_count_o15, inva_count_o15, and_count_o15, or_count_o15, xor_count_o15, nand_count_o15, nor_count_o15, xnor_count_o15, xor_cells_o15, and_cells_o15 = findUsedCellsTypes(o15_cells)
+    o15_origin_dict[seed_value] = [ida_count_o15, inva_count_o15, and_count_o15, or_count_o15, xor_count_o15, nand_count_o15, nor_count_o15, xnor_count_o15]
+    vectors_origin_dict[seed_value] = delay_value
+    # count of subparts a XOR b XOR c XOR d
+    xor_xor_xor_count = getXorXorXorCount(xor_cells)
+    #print(xor_xor_xor_count)
+
+    # count of subparts (a AND b) XOR (c AND d)
+    and_xor_and_count = getAndXorAndCount(xor_cells, and_cells)
+
+    # write info to csv file
+    with open('./csvFiles/chrFeatures.csv', 'a', newline='') as csv_file:
+        writer = csv.writer(csv_file)
+        writer.writerow([file_substr, ida_count, inva_count, and_count, or_count, xor_count, nand_count, nor_count, xnor_count, used_cells_size, compressed_file_size, xor_xor_xor_count, and_xor_and_count, "ORIGIN MULTIPLIER"])
+
+    csv_file.close()
+
+
+print(o15_origin_dict)
+print(vectors_origin_dict)
 
 xor_values = []
 mae_values = []
