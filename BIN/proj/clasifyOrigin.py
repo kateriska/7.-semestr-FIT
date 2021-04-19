@@ -9,9 +9,9 @@ import copy
 
 class Data(Dataset):
     def __init__(self):
-        self.x=torch.from_numpy(x_train)
-        self.y=torch.from_numpy(y_train)
-        self.len=self.x.shape[0]
+        self.x = torch.from_numpy(x_train)
+        self.y = torch.from_numpy(y_train)
+        self.len = self.x.shape[0]
     def __getitem__(self,index):
         return self.x[index], self.y[index]
     def __len__(self):
@@ -20,14 +20,14 @@ class Data(Dataset):
 class Net(nn.Module):
     def __init__(self,D_in,H,D_out):
         super(Net,self).__init__()
-        self.linear1=nn.Linear(D_in,H)
-        self.linear2=nn.Linear(H,D_out)
+        self.linear1 = nn.Linear(D_in,H)
+        self.linear2 = nn.Linear(H,D_out)
 
 
     def forward(self,x):
         #x=torch.nn.sigmoid(self.linear1(x))
-        x=torch.nn.functional.softmax (self.linear1(x))
-        x=self.linear2(x)
+        x = torch.nn.functional.softmax (self.linear1(x))
+        x = self.linear2(x)
         return x
 
 
@@ -60,39 +60,37 @@ print(x_train)
 x_val = torch.from_numpy(x_val)
 y_val = torch.from_numpy(y_val)
 
-data_set=Data()
-trainloader=DataLoader(dataset=data_set,batch_size=64)
+data_set = Data()
+trainloader = DataLoader(dataset=data_set,batch_size=16)
 
 print(data_set.x[1:10])
 
-input_dim=8     # how many Variables are in the dataset
+input_dim = 8     # how many Variables are in the dataset
 hidden_dim = 25 # hidden layers
-output_dim=6   # number of classes
+output_dim = 3   # number of classes
 
-model=Net(input_dim,hidden_dim,output_dim)
+model = Net(input_dim,hidden_dim,output_dim)
 print('W:',list(model.parameters())[0].size())
 print('b',list(model.parameters())[1].size())
 
-criterion=nn.CrossEntropyLoss()
-learning_rate=0.001
-optimizer=torch.optim.Adam(model.parameters(), lr=learning_rate)
+criterion = nn.CrossEntropyLoss()
+learning_rate = 0.001
+optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
-n_epochs=5000
-loss_list=[]
+n_epochs = 1000
+loss_list = []
 
 #n_epochs
 accuracy = 0
 for epoch in range(n_epochs):
     for x, y in trainloader:
-
-
         #clear gradient
         optimizer.zero_grad()
         #make a prediction
-        z=model(x)
+        z = model(x)
         # calculate loss, da Cross Entropy benutzt wird muss ich in den loss Klassen vorhersagen,
         # also Wahrscheinlichkeit pro Klasse. Das mach torch.max(y,1)[1])
-        loss=criterion(z,y)
+        loss = criterion(z,y)
         # calculate gradients of parameters
         loss.backward()
         # update parameters
@@ -103,21 +101,21 @@ for epoch in range(n_epochs):
 
         print('epoch {}, loss {}'.format(epoch, loss.item()))
 
-    z=model(x_val)
+    z = model(x_val)
     values, indices = torch.max(z.data,1)
 
 
     np_predictions = indices.detach().numpy()
     np_targets = y_val.detach().numpy()
-    print(np_predictions)
-    print(np_targets)
+    #print(np_predictions)
+    #print(np_targets)
 
     correctly_classified = 0
     for target, prediction in zip(np_targets, np_predictions):
         if (target == prediction):
             correctly_classified += 1
 
-    print(correctly_classified)
+    #print(correctly_classified)
     new_accuracy = (correctly_classified / np.shape(np_targets)[0])
 
 
@@ -125,7 +123,7 @@ for epoch in range(n_epochs):
         best_model = copy.deepcopy(model)
 
 
-z=best_model(x_val)
+z = best_model(x_val)
 values, indices = torch.max(z.data,1)
 
 

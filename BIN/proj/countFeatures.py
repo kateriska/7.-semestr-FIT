@@ -195,11 +195,11 @@ def writeVectors(f, g, seed_value, cells_counts):
     elif (seed_value == "csam_rca"):
         class_id = 2
     elif (seed_value == "csam_csa"):
-        class_id = 3
+        class_id = 2
     elif (seed_value == "wtm_csa"):
-        class_id = 4
+        class_id = 1
     elif (seed_value == "wtm_rca"):
-        class_id = 5
+        class_id = 1
 
     print(cells_counts)
     with open(f, 'a') as csv_file:
@@ -646,6 +646,20 @@ plt.show()
 -0.5277579870127447
 -0.25326372824607946
 0.9760709828652058
+
+-0.5953672486771648
+-0.46049366111516843
+0.09165558045136821
+0.10673997362810861
+-0.6185195515167919
+-0.44852669040220633
+0.9165193521817137
+0.7125189778419628
+0.9628090783460592
+-0.5109351726448996
+-0.32792102819564345
+0.9628090783460592
+
 
 
 '''
