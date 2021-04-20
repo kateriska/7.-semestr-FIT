@@ -7,15 +7,10 @@
 
 using namespace std;
 
-#define TAG_ROWS_COUNT_1 0
-#define TAG_ROWS_COUNT_2 1
-#define TAG_COLS_COUNT_1 2
-#define TAG_COLS_COUNT_2 3
-#define TAG_SEND_MATRIX1 4
-#define TAG_SEND_MATRIX2 5
-#define TAG_B_CHANNEL 6
-#define TAG_A_CHANNEL 7
-#define TAG_FIRST_PROCESSOR 8
+#define TAG_0 0
+#define TAG_1 1
+#define TAG_2 2
+#define TAG_3 3
 
 void showVectorItems(vector<int> input_vector)
 {
@@ -60,8 +55,6 @@ vector<int> loadMatrix(string file_name)
 
   file.close();
   return loaded_matrix;
-
-
 }
 
 // first matrix - count of rows, second matrix - count of cols
@@ -103,6 +96,34 @@ int get1Dposition(int matrix_cols_count, int i, int j)
   return position;
 }
 
+void printFinalOutput(int matrix1_rows_count, int matrix2_cols_count, vector<int> computed_matrix)
+{
+  cout << matrix1_rows_count << ":" << matrix2_cols_count << endl;
+
+  int computed_matrix_cols_count = 0;
+  string printed_line = "";
+  int loaded_number;
+
+  for (vector<int>::size_type i = 0; i < computed_matrix.size(); i++)
+  {
+    int & loaded_number = computed_matrix[i];
+    string loaded_number_str = to_string(loaded_number);
+
+    computed_matrix_cols_count = computed_matrix_cols_count + 1;
+
+    if (computed_matrix_cols_count == matrix2_cols_count )
+    {
+      printed_line = printed_line + " " + loaded_number_str;
+      printed_line = printed_line.substr(1, printed_line.length());
+      cout << printed_line << endl;
+      computed_matrix_cols_count = 0;
+      printed_line = "";
+      continue;
+    }
+    printed_line = printed_line + " " + loaded_number_str;
+  }
+  return;
+}
 
 int main(int argc, char *argv[])
 {
@@ -151,25 +172,25 @@ int main(int argc, char *argv[])
 
     for (int processor_id = 1; processor_id < processor_count; processor_id++)
     {
-      MPI_Send(&matrix1_rows_count, 1, MPI_INT, processor_id, TAG_ROWS_COUNT_1, MPI_COMM_WORLD);
-      MPI_Send(&matrix2_rows_count, 1, MPI_INT, processor_id, TAG_ROWS_COUNT_2, MPI_COMM_WORLD);
-      MPI_Send(&matrix1_cols_count, 1, MPI_INT, processor_id, TAG_COLS_COUNT_1, MPI_COMM_WORLD);
-      MPI_Send(&matrix2_cols_count, 1, MPI_INT, processor_id, TAG_COLS_COUNT_2, MPI_COMM_WORLD);
+      MPI_Send(&matrix1_rows_count, 1, MPI_INT, processor_id, TAG_0, MPI_COMM_WORLD);
+      MPI_Send(&matrix2_rows_count, 1, MPI_INT, processor_id, TAG_1, MPI_COMM_WORLD);
+      MPI_Send(&matrix1_cols_count, 1, MPI_INT, processor_id, TAG_2, MPI_COMM_WORLD);
+      MPI_Send(&matrix2_cols_count, 1, MPI_INT, processor_id, TAG_3, MPI_COMM_WORLD);
     }
 
   }
   else
   {
-    MPI_Recv(&neighbour_num, 1, MPI_INT, 0, TAG_ROWS_COUNT_1, MPI_COMM_WORLD, &stat);
+    MPI_Recv(&neighbour_num, 1, MPI_INT, 0, TAG_0, MPI_COMM_WORLD, &stat);
     matrix1_rows_count = neighbour_num;
     //cout << "Matrix1RowsCount : " << matrix1_rows_count << endl;
-    MPI_Recv(&neighbour_num, 1, MPI_INT, 0, TAG_ROWS_COUNT_2, MPI_COMM_WORLD, &stat);
+    MPI_Recv(&neighbour_num, 1, MPI_INT, 0, TAG_1, MPI_COMM_WORLD, &stat);
     matrix2_rows_count = neighbour_num;
     //cout << "Matrix2RowsCount : " << matrix2_rows_count << endl;
-    MPI_Recv(&neighbour_num, 1, MPI_INT, 0, TAG_COLS_COUNT_1, MPI_COMM_WORLD, &stat);
+    MPI_Recv(&neighbour_num, 1, MPI_INT, 0, TAG_2, MPI_COMM_WORLD, &stat);
     matrix1_cols_count = neighbour_num;
     //cout << "Matrix1ColsCount : " << matrix1_cols_count << endl;
-    MPI_Recv(&neighbour_num, 1, MPI_INT, 0, TAG_COLS_COUNT_2, MPI_COMM_WORLD, &stat);
+    MPI_Recv(&neighbour_num, 1, MPI_INT, 0, TAG_3, MPI_COMM_WORLD, &stat);
     matrix2_cols_count = neighbour_num;
     //cout << "Matrix2ColsCount : " << matrix2_cols_count << endl;
   }
@@ -189,8 +210,7 @@ int main(int argc, char *argv[])
         int matrix_value_index = get1Dposition(matrix1_cols_count, i, j);
         my_num = loaded_matrix1[matrix_value_index];
         neighbour_id = get1Dposition(matrix2_cols_count, i, 0);
-        MPI_Send(&my_num, 1, MPI_INT, neighbour_id, TAG_SEND_MATRIX1, MPI_COMM_WORLD);
-
+        MPI_Send(&my_num, 1, MPI_INT, neighbour_id, TAG_0, MPI_COMM_WORLD);
       }
     }
 
@@ -201,8 +221,7 @@ int main(int argc, char *argv[])
         int matrix_value_index = get1Dposition(matrix2_cols_count, i, j);
         my_num = loaded_matrix2[matrix_value_index];
         neighbour_id = get1Dposition(matrix2_cols_count, 0, j);
-        MPI_Send(&my_num, 1, MPI_INT, neighbour_id, TAG_SEND_MATRIX2, MPI_COMM_WORLD);
-
+        MPI_Send(&my_num, 1, MPI_INT, neighbour_id, TAG_1, MPI_COMM_WORLD);
       }
     }
   }
@@ -211,7 +230,7 @@ int main(int argc, char *argv[])
   {
     for (int i = 0; i < matrix1_cols_count; i++)
     {
-      MPI_Recv(&neighbour_num, 1, MPI_INT, 0, TAG_SEND_MATRIX1, MPI_COMM_WORLD, &stat);
+      MPI_Recv(&neighbour_num, 1, MPI_INT, 0, TAG_0, MPI_COMM_WORLD, &stat);
       matrix1_first_processor.push_back(neighbour_num);
     }
 
@@ -223,7 +242,7 @@ int main(int argc, char *argv[])
   {
     for (int i = 0; i < matrix2_rows_count; i++)
     {
-      MPI_Recv(&neighbour_num, 1, MPI_INT, 0, TAG_SEND_MATRIX2, MPI_COMM_WORLD, &stat);
+      MPI_Recv(&neighbour_num, 1, MPI_INT, 0, TAG_1, MPI_COMM_WORLD, &stat);
       matrix2_first_processor.push_back(neighbour_num);
     }
 
@@ -241,7 +260,7 @@ int main(int argc, char *argv[])
     else
     {
       neighbour_id = get1Dposition(matrix2_cols_count, processor_coordinate1, processor_coordinate2 - 1);
-      MPI_Recv(&neighbour_num, 1, MPI_INT, neighbour_id, TAG_B_CHANNEL, MPI_COMM_WORLD, &stat);
+      MPI_Recv(&neighbour_num, 1, MPI_INT, neighbour_id, TAG_1, MPI_COMM_WORLD, &stat);
       b = neighbour_num;
     }
 
@@ -253,7 +272,7 @@ int main(int argc, char *argv[])
     else
     {
       neighbour_id = get1Dposition(matrix2_cols_count, processor_coordinate1 - 1, processor_coordinate2);
-      MPI_Recv(&neighbour_num, 1, MPI_INT, neighbour_id, TAG_A_CHANNEL, MPI_COMM_WORLD, &stat);
+      MPI_Recv(&neighbour_num, 1, MPI_INT, neighbour_id, TAG_0, MPI_COMM_WORLD, &stat);
       a = neighbour_num;
     }
 
@@ -264,64 +283,34 @@ int main(int argc, char *argv[])
     if (processor_coordinate2 + 1 < matrix2_cols_count)
     {
       neighbour_id = get1Dposition(matrix2_cols_count, processor_coordinate1, processor_coordinate2 + 1);
-      MPI_Send(&b, 1, MPI_INT, neighbour_id, TAG_B_CHANNEL, MPI_COMM_WORLD);
+      MPI_Send(&b, 1, MPI_INT, neighbour_id, TAG_1, MPI_COMM_WORLD);
     }
 
     if (processor_coordinate1 + 1 < matrix1_rows_count)
     {
       neighbour_id = get1Dposition(matrix2_cols_count, processor_coordinate1 + 1, processor_coordinate2);
-      MPI_Send(&a, 1, MPI_INT, neighbour_id, TAG_A_CHANNEL, MPI_COMM_WORLD);
+      MPI_Send(&a, 1, MPI_INT, neighbour_id, TAG_0, MPI_COMM_WORLD);
     }
   }
 
   if (my_id != 0)
   {
-    MPI_Send(&c, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
+    MPI_Send(&c, 1, MPI_INT, 0, TAG_0, MPI_COMM_WORLD);
   }
   else
   {
     computed_matrix.push_back(c);
     for (int processor_id = 1; processor_id < processor_count; processor_id++)
     {
-      MPI_Recv(&neighbour_num, 1, MPI_INT, processor_id, 0, MPI_COMM_WORLD, &stat);
+      MPI_Recv(&neighbour_num, 1, MPI_INT, processor_id, TAG_0, MPI_COMM_WORLD, &stat);
       computed_matrix.push_back(neighbour_num);
     }
 
     showVectorItems(computed_matrix);
 
-    cout << matrix1_rows_count << ":" << matrix2_cols_count << endl;
-
-    int computed_matrix_cols_count = 0;
-    string printed_line = "";
-    int loaded_number;
-
-    for (vector<int>::size_type i = 0; i < computed_matrix.size(); i++)
-    {
-      int & loaded_number = computed_matrix[i];
-      string loaded_number_str = to_string(loaded_number);
-
-      computed_matrix_cols_count = computed_matrix_cols_count + 1;
-
-      if (computed_matrix_cols_count == matrix2_cols_count )
-      {
-        printed_line = printed_line + " " + loaded_number_str;
-        printed_line = printed_line.substr(1, printed_line.length());
-        cout << printed_line << endl;
-        computed_matrix_cols_count = 0;
-        printed_line = "";
-        continue;
-      }
-      printed_line = printed_line + " " + loaded_number_str;
-
-    }
+    printFinalOutput(matrix1_rows_count, matrix2_cols_count, computed_matrix);
 
   }
-
-
-
-
-
-
 
   MPI_Finalize();
   return 0;
