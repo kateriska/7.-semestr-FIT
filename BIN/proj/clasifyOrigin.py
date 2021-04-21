@@ -30,9 +30,63 @@ class Net(nn.Module):
         x = self.linear2(x)
         return x
 
+def reduceData(vectors, targets):
+    unique, counts = np.unique(targets, return_counts=True)
+    classes_counts_dict = dict(zip(unique, counts))
+    print(classes_counts_dict)
+    min_key = min(classes_counts_dict, key=classes_counts_dict.get)
+    min_value = classes_counts_dict[min_key]
+    print(min_value)
+
+    class_0_count = 0
+    class_1_count = 0
+    class_2_count = 0
+
+    vectors_reduced = np.array([])
+    classes_reduced = np.array([])
+
+    for vector, target in zip(vectors, targets):
+        if (target == 0 and class_0_count == min_value):
+            continue
+        elif (target == 1 and class_1_count == min_value):
+            continue
+        elif (target == 2 and class_2_count == min_value):
+            continue
+
+        if (target == 0):
+            class_0_count += 1
+        elif (target == 1):
+            class_1_count += 1
+        elif (target == 2):
+            class_2_count += 1
+
+        #print(vector)
+        #print(target)
+
+        vectors_reduced = np.append(vectors_reduced, vector)
+        classes_reduced = np.append(classes_reduced, target)
+
+    vectors_reduced.shape = (min_value * 3, 8)
+    print(vectors_reduced)
+    print(classes_reduced)
+
+
+    print(vectors_reduced.shape)
+    print(classes_reduced.shape)
+
+    vectors_reduced = vectors_reduced.astype('int64')
+    classes_reduced = classes_reduced.astype('int64')
+
+    return vectors_reduced, classes_reduced
 
 vectors = np.genfromtxt('./csvFiles/allVectors.csv',delimiter=",", dtype=int, skip_header=1)
 targets = np.genfromtxt('./csvFiles/allClasses.csv',dtype=int, skip_header=1)
+print(vectors.dtype)
+print(targets.dtype)
+
+vectors, targets = reduceData(vectors, targets)
+print(vectors.dtype)
+print(targets.dtype)
 
 transformer = Normalizer().fit(vectors)
 vectors = transformer.transform(vectors)
@@ -77,7 +131,7 @@ criterion = nn.CrossEntropyLoss()
 learning_rate = 0.001
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
-n_epochs = 1000
+n_epochs = 5000
 loss_list = []
 
 #n_epochs
