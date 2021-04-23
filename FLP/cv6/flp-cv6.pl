@@ -24,9 +24,9 @@ queens(N, Solution) :- sequence(N, Seq), permutation(Seq, Solution), test(Soluti
 
 test([]) :- !.
 % pocatecni pozice v ktere chci testovat, aktualni pozici a vsechny damy na prave strane
-test([H|T]) :- test(H,1,T).
+test([H|T]) :- test(H,1,T), test(T).
 test(_, _, []) :- !.
-test(Pos, Dist, [H|T]) :- Pos \= H, Sub is H - Pos,  Pos \= Sub, Distn is Dist + 1, test(Pos, Distn, T).
+test(Pos, Dist, [H|T]) :- Pos \= H, Sub is Pos - H, abs(Sub, AbsSub),  Dist \= AbsSub, Distn is Dist + 1, test(Pos, Distn, T).
 
 
 
