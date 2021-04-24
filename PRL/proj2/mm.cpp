@@ -51,7 +51,7 @@ vector<int> loadMatrix(string file_name)
 
   }
 
-  showVectorItems(loaded_matrix);
+  //showVectorItems(loaded_matrix);
 
   file.close();
   return loaded_matrix;
@@ -98,7 +98,7 @@ int get1Dposition(int matrix_cols_count, int i, int j)
 
 void printFinalOutput(int matrix1_rows_count, int matrix2_cols_count, vector<int> computed_matrix)
 {
-  cout << matrix1_rows_count << ":" << matrix2_cols_count << endl;
+  //cout << matrix1_rows_count << ":" << matrix2_cols_count << endl;
 
   int computed_matrix_cols_count = 0;
   string printed_line = "";
@@ -235,7 +235,7 @@ int main(int argc, char *argv[])
     }
 
     reverse(matrix1_first_processor.begin(), matrix1_first_processor.end());
-    showVectorItems(matrix1_first_processor);
+    //showVectorItems(matrix1_first_processor);
   }
 
   if (processor_coordinate1 == 0)
@@ -247,9 +247,11 @@ int main(int argc, char *argv[])
     }
 
     reverse(matrix2_first_processor.begin(), matrix2_first_processor.end());
-    showVectorItems(matrix2_first_processor);
+    //showVectorItems(matrix2_first_processor);
   }
 
+  MPI_Barrier(MPI_COMM_WORLD); /* IMPORTANT */
+  double start_time = MPI_Wtime(); // start of measuring time for experiments of own algorithm and not preparation process
   for (int i = 0; i < matrix2_rows_count; i++)
   {
     if (processor_coordinate2 == 0)
@@ -293,6 +295,9 @@ int main(int argc, char *argv[])
     }
   }
 
+  MPI_Barrier(MPI_COMM_WORLD); /* IMPORTANT */
+  double end_time = MPI_Wtime(); // end of measuring time for experiments
+
   if (my_id != 0)
   {
     MPI_Send(&c, 1, MPI_INT, 0, TAG_0, MPI_COMM_WORLD);
@@ -306,12 +311,22 @@ int main(int argc, char *argv[])
       computed_matrix.push_back(neighbour_num);
     }
 
-    showVectorItems(computed_matrix);
+    //showVectorItems(computed_matrix);
 
-    printFinalOutput(matrix1_rows_count, matrix2_cols_count, computed_matrix);
+    //printFinalOutput(matrix1_rows_count, matrix2_cols_count, computed_matrix);
+
 
   }
 
+
   MPI_Finalize();
+
+
+  if(my_id == 0)
+  {
+        printf("Runtime=%f\n", end_time-start_time); // printing of total running time of sorted algorithm
+  }
+
+
   return 0;
 }
