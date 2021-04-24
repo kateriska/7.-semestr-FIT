@@ -34,7 +34,9 @@ test(Pos, Dist, [H|T]) :- Pos \= H, Sub is Pos - H, abs(Sub, AbsSub),  Dist \= A
 cesty(XR, YR, XS, YS, XE, YE, N) :- XR > 0, YR > 1,
                                     assertz(velikost(XR, YR)),
                                     findall(P, cesta(XS,YS,XE,YE,P), Res),
-                                    length(Res, N).
+                                    length(Res, N),
+                                    retractall(pozice(XS,YS)),
+                                    retract(velikost(XR,YR)).
 
 
 
@@ -65,12 +67,6 @@ cesta(X,Y,XE,YE,[X:Y|T]) :- assertz(pozice(X,Y)), skok(X,Y, XN, YN), \+ pozice(X
 
 % nemuzu skocit - backtrack, ale nutnost odstraneni pozice pri backtrackingu, nemuzu jet dal, chci selhat
 cesta(X, Y, _, _, _) :- retract(pozice(X,Y)), !, fail.
-
-
-
-
-
-
 
 
 
