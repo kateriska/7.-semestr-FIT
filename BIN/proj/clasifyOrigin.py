@@ -120,7 +120,7 @@ trainloader = DataLoader(dataset=data_set,batch_size=16)
 print(data_set.x[1:10])
 
 input_dim = 8     # how many Variables are in the dataset
-hidden_dim = 25 # hidden layers
+hidden_dim = 4 # hidden layers
 output_dim = 3   # number of classes
 
 model = Net(input_dim,hidden_dim,output_dim)

@@ -8,6 +8,7 @@ import scipy.stats
 import time
 import numpy as np
 
+# parse cell and get ids of their two inputs and one output
 def parseCellIO(cell):
     # ([16]7,15,2)
     gate_id = int (cell[1:cell.find(']')])
@@ -17,6 +18,7 @@ def parseCellIO(cell):
     # 16 (output of cell), 7, 15
     return gate_id, input1, input2
 
+# get interesting metrics for multiplier from json file
 def jsonMetrics(json_data, file_substr):
     mae_value = json_data[file_substr][0]["mae"]
     wce_value = json_data[file_substr][0]["wce"]
@@ -28,6 +30,7 @@ def jsonMetrics(json_data, file_substr):
 
     return mae_value, wce_value, wce_percent_value, area_value, delay_value, pwr_value, levels_value
 
+# get size of compressed archive with chromozome of multiplier
 def getCompressedSize(chr_path, file_substr):
     # open chr file of json object
     f_in = open(chr_path + file_substr + ".chr", 'rb')
@@ -41,6 +44,7 @@ def getCompressedSize(chr_path, file_substr):
     compressed_file_size = os.path.getsize("./compressedChrFiles/" + file_substr + '.zip')
     return compressed_file_size
 
+# find list of used cells by cgp
 def findUsedCells(cgp_gates_codes_list):
     used_cgp_gates_codes_list = []
     for cgp_gates_code in cgp_gates_codes_list:
@@ -51,12 +55,12 @@ def findUsedCells(cgp_gates_codes_list):
                 continue
             gate_id2, input12, input22  = parseCellIO(cgp_gates_code2)
 
-
             if (input12 == gate_id or input22 == gate_id or gate_id in outputs_list):
                 used_cgp_gates_codes_list.append(cgp_gates_code)
                 break
     return used_cgp_gates_codes_list
 
+# find types of used cells
 def findUsedCellsTypes(used_cgp_gates_codes_list):
     # find count of used types of cells
     '''
@@ -108,8 +112,8 @@ def findUsedCellsTypes(used_cgp_gates_codes_list):
 
     return ida_count, inva_count, and_count, or_count, xor_count, nand_count, nor_count, xnor_count, xor_cells, and_cells
 
+# count of subparts a XOR b XOR c XOR d
 def getXorXorXorCount(xor_cells):
-    # count of subparts a XOR b XOR c XOR d
     xor_xor_xor_count = 0
     for xor_cell in xor_cells:
         gate_id, input1, input2 = parseCellIO(xor_cell)
@@ -128,11 +132,11 @@ def getXorXorXorCount(xor_cells):
                     if (gate_id2 == input13 or gate_id2 == input23):
                         #print(xor_cell + "->" + xor_cell2 + "->" +xor_cell3)
                         xor_xor_xor_count += 1
-        #print("XOR XOR XOR count " + str(xor_xor_xor_count))
+    #print("XOR XOR XOR count " + str(xor_xor_xor_count))
     return xor_xor_xor_count
 
+# count of subparts (a AND b) XOR (c AND d)
 def getAndXorAndCount(xor_cells, and_cells):
-    # count of subparts (a AND b) XOR (c AND d)
     and_xor_and_count = 0
     for and_cell in and_cells:
         gate_id, input1, input2 = parseCellIO(and_cell)
@@ -152,22 +156,7 @@ def getAndXorAndCount(xor_cells, and_cells):
     #print("AND XOR AND count " + str(and_xor_and_count))
     return and_xor_and_count
 
-def findO15cells(cell, o15_cells):
-    gate_id, input1, input2 = parseCellIO(cell)
-
-    inputs = [0,1,2,3,4,5,6,7] # 7 init inputs of multiplier
-
-    if (input1 in inputs or input2 in inputs):
-        o15_cells.append(cell)
-        return o15_cells
-    else:
-        for used_cell in used_cgp_gates_codes_list:
-            gate_id2, input12, input22 = parseCellIO(used_cell)
-
-            if (gate_id2 == input1 or gate_id2 == input2):
-                o15_cells.append(used_cell)
-                return findO15cells(used_cell, o15_cells)
-
+# count distance between parent vector of MSB output cell types and approximated multiplier
 def computeO15variability(seed, o15_origin_dict, o15_cells):
     o15_variability = []
     for origin_vector, vector in zip(o15_origin_dict[seed], o15_cells):
@@ -186,7 +175,25 @@ def metricsOriginPredict(seed, vectors_origin_dict, delay_value):
     predicted_origin = min(absolute_distance_dict, key=lambda k: absolute_distance_dict[k])
     return predicted_origin
 
+# recursively compute for cell on which final output is connected (#%o O15,O14,O13,O12,O11,O10,O9,O8,O7,O6,O5,O4,O3,O2,O1,O0)
+def computeCellsConnectedOutput(used_cgp_gates_codes_list, outputs_list, cell):
+    next_gate_found = False
 
+    gate_id, input1, input2 = parseCellIO(cell)
+
+    for cell2 in used_cgp_gates_codes_list:
+        if (cell == cell2):
+            continue
+        gate_id2, input12, input22 = parseCellIO(cell2)
+
+        if (gate_id == input12 or gate_id == input22):
+            next_gate_found = True
+            return computeCellsConnectedOutput(used_cgp_gates_codes_list, outputs_list, cell2)
+    if (next_gate_found == False):
+        if gate_id in outputs_list:
+            return gate_id
+
+# write interesting vectors for csv file as train data for classifier of origin of multiplier
 def writeVectors(f, g, seed_value, cells_counts):
     if (seed_value == "rcam"):
         class_id = 0
@@ -201,7 +208,7 @@ def writeVectors(f, g, seed_value, cells_counts):
     elif (seed_value == "wtm_rca"):
         class_id = 1
 
-    print(cells_counts)
+    #print(cells_counts)
     with open(f, 'a') as csv_file:
         writer = csv.writer(csv_file)
         writer.writerow(cells_counts)
@@ -213,6 +220,7 @@ def writeVectors(f, g, seed_value, cells_counts):
     csv_file.close()
 
 
+# start time of measure program
 start_time = time.time()
 
 chr_path = './cgp-approx14ep.chr/'
@@ -220,7 +228,6 @@ chr_origin_path = './rodicovske8b_nasobicky/'
 csv_path = './csvFiles/chrFeatures.csv'
 f = "./csvFiles/allVectors.csv"
 g = "./csvFiles/allClasses.csv"
-
 
 
 # write head of csv files
@@ -242,6 +249,7 @@ with open(g, 'w+') as csv_file:
 
 csv_file.close()
 
+#################### PARENT MULTIPLIERS ########################################
 o15_origin_dict = {}
 vectors_origin_dict = {}
 # iterate through json file with three origin multipliers which are in original json
@@ -278,15 +286,6 @@ with open('origin_data.json', "rb") as json_file:
         used_cells_size = len(used_cgp_gates_codes_list)
         #print("Size of used cells: " + str(len(used_cgp_gates_codes_list)))
 
-        o_15_output = outputs_list[0]
-        for cell in used_cgp_gates_codes_list:
-            gate_id, input1, input2 = parseCellIO(cell)
-
-            if (gate_id == o_15_output):
-                o15_cells = findO15cells(cell, [])
-                break
-        #print(o15_cells)
-
         xor_cells = []
         and_cells = []
 
@@ -294,10 +293,22 @@ with open('origin_data.json', "rb") as json_file:
         # find count of used types of cells
         ida_count, inva_count, and_count, or_count, xor_count, nand_count, nor_count, xnor_count, xor_cells, and_cells = findUsedCellsTypes(used_cgp_gates_codes_list)
 
+        o15_cells = []
+        o15_output = outputs_list[0]
+
+        for cell in used_cgp_gates_codes_list:
+            cell_connected_output = computeCellsConnectedOutput(used_cgp_gates_codes_list, outputs_list, cell)
+            #print("Cell: " + cell)
+            #print("Connected Output: " + str(cell_connected_output))
+
+            if (cell_connected_output == o15_output):
+                o15_cells.append(cell)
+
         # find count of used types of cells for O15 output and add this vector to origin dict
         ida_count_o15, inva_count_o15, and_count_o15, or_count_o15, xor_count_o15, nand_count_o15, nor_count_o15, xnor_count_o15, xor_cells_o15, and_cells_o15 = findUsedCellsTypes(o15_cells)
         o15_origin_dict[seed_value] = [ida_count_o15, inva_count_o15, and_count_o15, or_count_o15, xor_count_o15, nand_count_o15, nor_count_o15, xnor_count_o15]
         vectors_origin_dict[seed_value] = delay_value
+
         # count of subparts a XOR b XOR c XOR d
         xor_xor_xor_count = getXorXorXorCount(xor_cells)
         #print(xor_xor_xor_count)
@@ -315,7 +326,18 @@ with open('origin_data.json', "rb") as json_file:
         cells_counts.append(nor_count)
         cells_counts.append(xnor_count)
 
-        writeVectors(f,g,seed_value,cells_counts)
+        o15_counts = list()
+        o15_counts.append(ida_count_o15)
+        o15_counts.append(inva_count_o15)
+        o15_counts.append(and_count_o15)
+        o15_counts.append(or_count_o15)
+        o15_counts.append(xor_count_o15)
+        o15_counts.append(nand_count_o15)
+        o15_counts.append(nor_count_o15)
+        o15_counts.append(xnor_count_o15)
+
+        writeVectors(f,g,seed_value,o15_counts)
+
         # write info to csv file
         with open('./csvFiles/chrFeatures.csv', 'a', newline='') as csv_file:
             writer = csv.writer(csv_file)
@@ -323,7 +345,8 @@ with open('origin_data.json', "rb") as json_file:
 
         csv_file.close()
 
-
+#print(o15_origin_dict)
+#exit(0)
 
 for file in glob.glob("./rodicovske8b_nasobicky/*"):
     file_substr = file.split('/')[-1] # get name of processed file
@@ -355,22 +378,24 @@ for file in glob.glob("./rodicovske8b_nasobicky/*"):
     used_cells_size = len(used_cgp_gates_codes_list)
     #print("Size of used cells: " + str(len(used_cgp_gates_codes_list)))
 
-    o_15_output = outputs_list[0]
-    for cell in used_cgp_gates_codes_list:
-        gate_id, input1, input2 = parseCellIO(cell)
-
-        if (gate_id == o_15_output):
-            o15_cells = findO15cells(cell, [])
-            break
-    #print(o15_cells)
-
     xor_cells = []
     and_cells = []
 
     seed_value = file_substr[2:file_substr.find('-')]
-    print(seed_value)
+    #print(seed_value)
     # find count of used types of cells
     ida_count, inva_count, and_count, or_count, xor_count, nand_count, nor_count, xnor_count, xor_cells, and_cells = findUsedCellsTypes(used_cgp_gates_codes_list)
+
+    o15_cells = []
+    o15_output = outputs_list[0]
+
+    for cell in used_cgp_gates_codes_list:
+        cell_connected_output = computeCellsConnectedOutput(used_cgp_gates_codes_list, outputs_list, cell)
+        #print("Cell: " + cell)
+        #print("Connected Output: " + str(cell_connected_output))
+
+        if (cell_connected_output == o15_output):
+            o15_cells.append(cell)
 
     # find count of used types of cells for O15 output and add this vector to origin dict
     ida_count_o15, inva_count_o15, and_count_o15, or_count_o15, xor_count_o15, nand_count_o15, nor_count_o15, xnor_count_o15, xor_cells_o15, and_cells_o15 = findUsedCellsTypes(o15_cells)
@@ -393,7 +418,17 @@ for file in glob.glob("./rodicovske8b_nasobicky/*"):
     cells_counts.append(nor_count)
     cells_counts.append(xnor_count)
 
-    writeVectors(f,g,seed_value,cells_counts)
+    o15_counts = list()
+    o15_counts.append(ida_count_o15)
+    o15_counts.append(inva_count_o15)
+    o15_counts.append(and_count_o15)
+    o15_counts.append(or_count_o15)
+    o15_counts.append(xor_count_o15)
+    o15_counts.append(nand_count_o15)
+    o15_counts.append(nor_count_o15)
+    o15_counts.append(xnor_count_o15)
+
+    writeVectors(f,g,seed_value,o15_counts)
 
     # write info to csv file
     with open('./csvFiles/chrFeatures.csv', 'a', newline='') as csv_file:
@@ -405,7 +440,9 @@ for file in glob.glob("./rodicovske8b_nasobicky/*"):
 
 print(o15_origin_dict)
 print(vectors_origin_dict)
+#exit(0)
 
+#################### APROXIMATED EVOLVED MULTIPLIERS ########################################
 xor_values = []
 mae_values = []
 wce_values = []
@@ -433,7 +470,6 @@ with open('filtered_data.json', "rb") as json_file:
         delay_values.append(delay_value)
         pwr_values.append(pwr_value)
         levels_values.append(levels_value)
-
 
         compressed_file_size = getCompressedSize(chr_path, file_substr)
 
@@ -470,6 +506,17 @@ with open('filtered_data.json', "rb") as json_file:
         # find count of used types of cells
         ida_count, inva_count, and_count, or_count, xor_count, nand_count, nor_count, xnor_count, xor_cells, and_cells = findUsedCellsTypes(used_cgp_gates_codes_list)
 
+        o15_cells = []
+        o15_output = outputs_list[0]
+
+        for cell in used_cgp_gates_codes_list:
+            cell_connected_output = computeCellsConnectedOutput(used_cgp_gates_codes_list, outputs_list, cell)
+            #print("Cell: " + cell)
+            #print("Connected Output: " + str(cell_connected_output))
+
+            if (cell_connected_output == o15_output):
+                o15_cells.append(cell)
+
         # find count of used types of cells for O15 output
         ida_count_o15, inva_count_o15, and_count_o15, or_count_o15, xor_count_o15, nand_count_o15, nor_count_o15, xnor_count_o15, xor_cells_o15, and_cells_o15 = findUsedCellsTypes(o15_cells)
         o15_variability = computeO15variability(seed_value, o15_origin_dict, [ida_count_o15, inva_count_o15, and_count_o15, or_count_o15, xor_count_o15, nand_count_o15, nor_count_o15, xnor_count_o15, xor_cells_o15, and_cells_o15])
@@ -504,7 +551,17 @@ with open('filtered_data.json', "rb") as json_file:
         cells_counts.append(nor_count)
         cells_counts.append(xnor_count)
 
-        writeVectors(f,g,seed_value,cells_counts)
+        o15_counts = list()
+        o15_counts.append(ida_count_o15)
+        o15_counts.append(inva_count_o15)
+        o15_counts.append(and_count_o15)
+        o15_counts.append(or_count_o15)
+        o15_counts.append(xor_count_o15)
+        o15_counts.append(nand_count_o15)
+        o15_counts.append(nor_count_o15)
+        o15_counts.append(xnor_count_o15)
+
+        writeVectors(f,g,seed_value,o15_counts)
 
         # write info to csv file
         with open('./csvFiles/chrFeatures.csv', 'a', newline='') as csv_file:
@@ -518,6 +575,7 @@ print("Accuracy of predicion based on metrics: " + str(metrics_prediction_accura
 # print duration of program
 print("--- %s seconds ---" % (time.time() - start_time))
 
+############### PLOTING OF INTERESTING GRAPHS AND CORRELATIONS BETWEEN DATA ######################################
 # show some interesting graphs and correlations of dependecies
 figure = plt.figure(figsize=(30, 30))
 xor_mae_plot = figure.add_subplot(2,3,1)
