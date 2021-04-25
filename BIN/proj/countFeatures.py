@@ -251,7 +251,7 @@ csv_file.close()
 
 #################### PARENT MULTIPLIERS ########################################
 o15_origin_dict = {}
-vectors_origin_dict = {}
+#vectors_origin_dict = {}
 # iterate through json file with three origin multipliers which are in original json
 with open('origin_data.json', "rb") as json_file:
     json_data = orjson.loads(json_file.read())
@@ -307,7 +307,7 @@ with open('origin_data.json', "rb") as json_file:
         # find count of used types of cells for O15 output and add this vector to origin dict
         ida_count_o15, inva_count_o15, and_count_o15, or_count_o15, xor_count_o15, nand_count_o15, nor_count_o15, xnor_count_o15, xor_cells_o15, and_cells_o15 = findUsedCellsTypes(o15_cells)
         o15_origin_dict[seed_value] = [ida_count_o15, inva_count_o15, and_count_o15, or_count_o15, xor_count_o15, nand_count_o15, nor_count_o15, xnor_count_o15]
-        vectors_origin_dict[seed_value] = delay_value
+        #vectors_origin_dict[seed_value] = delay_value
 
         # count of subparts a XOR b XOR c XOR d
         xor_xor_xor_count = getXorXorXorCount(xor_cells)
@@ -326,17 +326,7 @@ with open('origin_data.json', "rb") as json_file:
         cells_counts.append(nor_count)
         cells_counts.append(xnor_count)
 
-        o15_counts = list()
-        o15_counts.append(ida_count_o15)
-        o15_counts.append(inva_count_o15)
-        o15_counts.append(and_count_o15)
-        o15_counts.append(or_count_o15)
-        o15_counts.append(xor_count_o15)
-        o15_counts.append(nand_count_o15)
-        o15_counts.append(nor_count_o15)
-        o15_counts.append(xnor_count_o15)
-
-        writeVectors(f,g,seed_value,o15_counts)
+        writeVectors(f,g,seed_value,cells_counts)
 
         # write info to csv file
         with open('./csvFiles/chrFeatures.csv', 'a', newline='') as csv_file:
@@ -400,7 +390,7 @@ for file in glob.glob("./rodicovske8b_nasobicky/*"):
     # find count of used types of cells for O15 output and add this vector to origin dict
     ida_count_o15, inva_count_o15, and_count_o15, or_count_o15, xor_count_o15, nand_count_o15, nor_count_o15, xnor_count_o15, xor_cells_o15, and_cells_o15 = findUsedCellsTypes(o15_cells)
     o15_origin_dict[seed_value] = [ida_count_o15, inva_count_o15, and_count_o15, or_count_o15, xor_count_o15, nand_count_o15, nor_count_o15, xnor_count_o15]
-    vectors_origin_dict[seed_value] = delay_value
+    #vectors_origin_dict[seed_value] = delay_value
     # count of subparts a XOR b XOR c XOR d
     xor_xor_xor_count = getXorXorXorCount(xor_cells)
     #print(xor_xor_xor_count)
@@ -418,17 +408,7 @@ for file in glob.glob("./rodicovske8b_nasobicky/*"):
     cells_counts.append(nor_count)
     cells_counts.append(xnor_count)
 
-    o15_counts = list()
-    o15_counts.append(ida_count_o15)
-    o15_counts.append(inva_count_o15)
-    o15_counts.append(and_count_o15)
-    o15_counts.append(or_count_o15)
-    o15_counts.append(xor_count_o15)
-    o15_counts.append(nand_count_o15)
-    o15_counts.append(nor_count_o15)
-    o15_counts.append(xnor_count_o15)
-
-    writeVectors(f,g,seed_value,o15_counts)
+    writeVectors(f,g,seed_value,cells_counts)
 
     # write info to csv file
     with open('./csvFiles/chrFeatures.csv', 'a', newline='') as csv_file:
@@ -439,7 +419,6 @@ for file in glob.glob("./rodicovske8b_nasobicky/*"):
 
 
 print(o15_origin_dict)
-print(vectors_origin_dict)
 #exit(0)
 
 #################### APROXIMATED EVOLVED MULTIPLIERS ########################################
@@ -521,14 +500,6 @@ with open('filtered_data.json', "rb") as json_file:
         ida_count_o15, inva_count_o15, and_count_o15, or_count_o15, xor_count_o15, nand_count_o15, nor_count_o15, xnor_count_o15, xor_cells_o15, and_cells_o15 = findUsedCellsTypes(o15_cells)
         o15_variability = computeO15variability(seed_value, o15_origin_dict, [ida_count_o15, inva_count_o15, and_count_o15, or_count_o15, xor_count_o15, nand_count_o15, nor_count_o15, xnor_count_o15, xor_cells_o15, and_cells_o15])
 
-        # predict based on some metrics origin or evolved multiplier
-        predicted_origin = metricsOriginPredict(seed_value, vectors_origin_dict, delay_value)
-        print(predicted_origin)
-        if (predicted_origin == seed_value):
-            prediction_correct_count = prediction_correct_count + 1
-        else:
-            prediction_wrong_count = prediction_wrong_count + 1
-
         # count of subparts a XOR b XOR c XOR d
         xor_xor_xor_count = getXorXorXorCount(xor_cells)
         #print(xor_xor_xor_count)
@@ -551,17 +522,7 @@ with open('filtered_data.json', "rb") as json_file:
         cells_counts.append(nor_count)
         cells_counts.append(xnor_count)
 
-        o15_counts = list()
-        o15_counts.append(ida_count_o15)
-        o15_counts.append(inva_count_o15)
-        o15_counts.append(and_count_o15)
-        o15_counts.append(or_count_o15)
-        o15_counts.append(xor_count_o15)
-        o15_counts.append(nand_count_o15)
-        o15_counts.append(nor_count_o15)
-        o15_counts.append(xnor_count_o15)
-
-        writeVectors(f,g,seed_value,o15_counts)
+        writeVectors(f,g,seed_value,cells_counts)
 
         # write info to csv file
         with open('./csvFiles/chrFeatures.csv', 'a', newline='') as csv_file:

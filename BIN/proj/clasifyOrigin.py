@@ -110,7 +110,7 @@ def reduceData(vectors, targets):
         vectors_reduced = np.append(vectors_reduced, vector)
         classes_reduced = np.append(classes_reduced, target)
 
-    vectors_reduced.shape = (min_value * 6, 8)
+    vectors_reduced.shape = (min_value * 3, 8)
     print(vectors_reduced)
     print(classes_reduced)
 
@@ -123,10 +123,19 @@ def reduceData(vectors, targets):
 
     return vectors_reduced, classes_reduced
 
+def replaceClasses(targets):
+    print(targets)
+    targets[targets==3]=2
+    targets[targets==4]=1
+    targets[targets==5]=1
+    print(targets)
+    return targets
+
 vectors = np.genfromtxt('./csvFiles/allVectorsSixClasses.csv',delimiter=",", dtype=int, skip_header=1)
 targets = np.genfromtxt('./csvFiles/allClassesSixClasses.csv',dtype=int, skip_header=1)
 print(vectors.dtype)
 print(targets.dtype)
+targets = replaceClasses(targets)
 
 vectors, targets = reduceData(vectors, targets)
 print(vectors.dtype)
@@ -140,7 +149,10 @@ vectors = transformer.transform(vectors)
 print(vectors)
 print(targets)
 
-x, x_val, y, y_val = train_test_split(vectors, targets, test_size=0.33, random_state=42)
+# split to train and val dataset
+x, x_val, y, y_val = train_test_split(vectors, targets, test_size=0.30, random_state=42)
+# split val dataset to val dataset and test dataset
+x_val, x_test, y_val, y_test = train_test_split(x_val, y_val, test_size=0.50, random_state=42)
 
 print(x.shape)
 print(y.shape)
@@ -153,10 +165,16 @@ y_train = y
 x_val = x_val.reshape(-1, x_val.shape[1]).astype('float32')
 y_val = y_val
 
+x_test = x_test.reshape(-1, x_test.shape[1]).astype('float32')
+y_test = y_test
+
 print(x_train)
 
 x_val = torch.from_numpy(x_val)
 y_val = torch.from_numpy(y_val)
+
+x_test = torch.from_numpy(x_test)
+y_test = torch.from_numpy(y_test)
 
 data_set = Data()
 trainloader = DataLoader(dataset=data_set,batch_size=32)
@@ -165,7 +183,7 @@ print(data_set.x[1:10])
 
 input_dim = 8     # how many Variables are in the dataset
 hidden_dim = 4 # hidden layers
-output_dim = 6   # number of classes
+output_dim = 3   # number of classes
 
 model = Net(input_dim,hidden_dim,output_dim)
 print('W:',list(model.parameters())[0].size())
@@ -175,7 +193,7 @@ criterion = nn.CrossEntropyLoss()
 learning_rate = 0.001
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
-n_epochs = 1000
+n_epochs = 100
 loss_list = []
 
 #n_epochs
@@ -216,17 +234,18 @@ for epoch in range(n_epochs):
     #print(correctly_classified)
     new_accuracy = (correctly_classified / np.shape(np_targets)[0])
 
+    print(new_accuracy)
 
     if (new_accuracy > accuracy):
         best_model = copy.deepcopy(model)
 
 
-z = best_model(x_val)
+z = best_model(x_test)
 values, indices = torch.max(z.data,1)
 
-
+# finally predict on test data
 np_predictions = indices.detach().numpy()
-np_targets = y_val.detach().numpy()
+np_targets = y_test.detach().numpy()
 print(np_predictions)
 print(np_targets)
 
