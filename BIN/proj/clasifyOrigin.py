@@ -20,14 +20,43 @@ class Data(Dataset):
 class Net(nn.Module):
     def __init__(self,D_in,H,D_out):
         super(Net,self).__init__()
-        self.linear1 = nn.Linear(D_in,H)
-        self.linear2 = nn.Linear(H,D_out)
+        #self.linear1 = nn.Linear(D_in,H)
+        #self.linear2 = nn.Linear(H,D_out)
+
+        self.layer_1 = nn.Linear(D_in, 512)
+        self.layer_2 = nn.Linear(512, 128)
+        self.layer_3 = nn.Linear(128, 64)
+        self.layer_out = nn.Linear(64, D_out)
+
+        self.relu = nn.ReLU()
+        self.dropout = nn.Dropout(p=0.2)
+        self.batchnorm1 = nn.BatchNorm1d(512)
+        self.batchnorm2 = nn.BatchNorm1d(128)
+        self.batchnorm3 = nn.BatchNorm1d(64)
 
 
     def forward(self,x):
         #x=torch.nn.sigmoid(self.linear1(x))
-        x = torch.nn.functional.softmax (self.linear1(x))
-        x = self.linear2(x)
+        #x = torch.nn.functional.softmax (self.linear1(x))
+        #x = self.linear2(x)
+        #return x
+
+        x = self.layer_1(x)
+        x = self.batchnorm1(x)
+        x = self.relu(x)
+
+        x = self.layer_2(x)
+        x = self.batchnorm2(x)
+        x = self.relu(x)
+        x = self.dropout(x)
+
+        x = self.layer_3(x)
+        x = self.batchnorm3(x)
+        x = self.relu(x)
+        x = self.dropout(x)
+
+        x = self.layer_out(x)
+
         return x
 
 def reduceData(vectors, targets):
@@ -41,6 +70,9 @@ def reduceData(vectors, targets):
     class_0_count = 0
     class_1_count = 0
     class_2_count = 0
+    class_3_count = 0
+    class_4_count = 0
+    class_5_count = 0
 
     vectors_reduced = np.array([])
     classes_reduced = np.array([])
@@ -52,6 +84,12 @@ def reduceData(vectors, targets):
             continue
         elif (target == 2 and class_2_count == min_value):
             continue
+        elif (target == 3 and class_3_count == min_value):
+            continue
+        elif (target == 4 and class_4_count == min_value):
+            continue
+        elif (target == 5 and class_5_count == min_value):
+            continue
 
         if (target == 0):
             class_0_count += 1
@@ -59,6 +97,12 @@ def reduceData(vectors, targets):
             class_1_count += 1
         elif (target == 2):
             class_2_count += 1
+        if (target == 3):
+            class_3_count += 1
+        elif (target == 4):
+            class_4_count += 1
+        elif (target == 5):
+            class_5_count += 1
 
         #print(vector)
         #print(target)
@@ -66,7 +110,7 @@ def reduceData(vectors, targets):
         vectors_reduced = np.append(vectors_reduced, vector)
         classes_reduced = np.append(classes_reduced, target)
 
-    vectors_reduced.shape = (min_value * 3, 8)
+    vectors_reduced.shape = (min_value * 6, 8)
     print(vectors_reduced)
     print(classes_reduced)
 
@@ -79,8 +123,8 @@ def reduceData(vectors, targets):
 
     return vectors_reduced, classes_reduced
 
-vectors = np.genfromtxt('./csvFiles/allVectors.csv',delimiter=",", dtype=int, skip_header=1)
-targets = np.genfromtxt('./csvFiles/allClasses.csv',dtype=int, skip_header=1)
+vectors = np.genfromtxt('./csvFiles/allVectorsSixClasses.csv',delimiter=",", dtype=int, skip_header=1)
+targets = np.genfromtxt('./csvFiles/allClassesSixClasses.csv',dtype=int, skip_header=1)
 print(vectors.dtype)
 print(targets.dtype)
 
@@ -115,13 +159,13 @@ x_val = torch.from_numpy(x_val)
 y_val = torch.from_numpy(y_val)
 
 data_set = Data()
-trainloader = DataLoader(dataset=data_set,batch_size=16)
+trainloader = DataLoader(dataset=data_set,batch_size=32)
 
 print(data_set.x[1:10])
 
 input_dim = 8     # how many Variables are in the dataset
 hidden_dim = 4 # hidden layers
-output_dim = 3   # number of classes
+output_dim = 6   # number of classes
 
 model = Net(input_dim,hidden_dim,output_dim)
 print('W:',list(model.parameters())[0].size())
@@ -131,7 +175,7 @@ criterion = nn.CrossEntropyLoss()
 learning_rate = 0.001
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
-n_epochs = 5000
+n_epochs = 1000
 loss_list = []
 
 #n_epochs
