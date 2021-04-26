@@ -7,11 +7,13 @@
 
 using namespace std;
 
+// tags for marking channels communication between processors
 #define TAG_0 0
 #define TAG_1 1
 #define TAG_2 2
 #define TAG_3 3
 
+// debug function for showing saved values into vector
 void showVectorItems(vector<int> input_vector)
 {
   for (auto i = input_vector.begin(); i != input_vector.end(); ++i)
@@ -22,6 +24,7 @@ void showVectorItems(vector<int> input_vector)
   cout << endl;
 }
 
+// load matrix from file
 vector<int> loadMatrix(string file_name)
 {
   vector<int> loaded_matrix;
@@ -57,7 +60,7 @@ vector<int> loadMatrix(string file_name)
   return loaded_matrix;
 }
 
-// first matrix - count of rows, second matrix - count of cols
+// get dimension of matrix which is on the first line of file - first matrix - count of rows, second matrix - count of cols
 int getInputMatrixFileDimension(string file_name)
 {
   vector<int> loaded_matrix;
@@ -75,6 +78,7 @@ int getInputMatrixFileDimension(string file_name)
   return matrix_rows_count;
 }
 
+// get 2D position of processor in mesh
 vector<int> getProcessor2Dposition(int my_id, int matrix2_cols_count)
 {
   vector<int> position;
@@ -88,6 +92,7 @@ vector<int> getProcessor2Dposition(int my_id, int matrix2_cols_count)
   return position;
 }
 
+// get 1D position of processor in mesh or number in matrix
 int get1Dposition(int matrix_cols_count, int i, int j)
 {
   int position;
@@ -96,9 +101,10 @@ int get1Dposition(int matrix_cols_count, int i, int j)
   return position;
 }
 
+// print final output of calculated matrix to stdout
 void printFinalOutput(int matrix1_rows_count, int matrix2_cols_count, vector<int> computed_matrix)
 {
-  //cout << matrix1_rows_count << ":" << matrix2_cols_count << endl;
+  cout << matrix1_rows_count << ":" << matrix2_cols_count << endl;
 
   int computed_matrix_cols_count = 0;
   string printed_line = "";
@@ -131,7 +137,7 @@ int main(int argc, char *argv[])
   int my_id;  // rank of my processor
   int neighbour_num; // number which carry neighbour process
   int my_num; // my number
-  int neighbour_id;
+  int neighbour_id; // id of neighbour processsor
   MPI_Status stat;
 
   vector<int> loaded_matrix1;
@@ -158,18 +164,23 @@ int main(int argc, char *argv[])
 
   if (my_id == 0)
   {
+    // load two matrix from file and get their dimensions
     loaded_matrix1 = loadMatrix("mat1");
     matrix1_rows_count = getInputMatrixFileDimension("mat1");
-    //cout << matrix1_rows_count << endl;
     matrix1_cols_count = loaded_matrix1.size() / matrix1_rows_count;
-    //cout << matrix1_cols_count << endl;
 
     loaded_matrix2 = loadMatrix("mat2");
     matrix2_cols_count = getInputMatrixFileDimension("mat2");
     matrix2_rows_count = loaded_matrix2.size() / matrix2_cols_count;
-    //cout << matrix2_rows_count << endl;
-    //cout << matrix2_cols_count << endl;
 
+    // the requirement of matrix multiplication is that count of cols of first matrix has to be same as count of rows of second matrix
+    if (matrix1_cols_count != matrix2_rows_count)
+    {
+      cerr << "Error - Count of cols of first matrix has to be equal to count of rows of second matrix!\n";
+      exit(EXIT_FAILURE);
+    }
+
+    // send dimensions of each matrix to next processors in mesh
     for (int processor_id = 1; processor_id < processor_count; processor_id++)
     {
       MPI_Send(&matrix1_rows_count, 1, MPI_INT, processor_id, TAG_0, MPI_COMM_WORLD);
@@ -181,26 +192,25 @@ int main(int argc, char *argv[])
   }
   else
   {
+    // other processors in mesh receive dimensions of each matrix
     MPI_Recv(&neighbour_num, 1, MPI_INT, 0, TAG_0, MPI_COMM_WORLD, &stat);
     matrix1_rows_count = neighbour_num;
-    //cout << "Matrix1RowsCount : " << matrix1_rows_count << endl;
     MPI_Recv(&neighbour_num, 1, MPI_INT, 0, TAG_1, MPI_COMM_WORLD, &stat);
     matrix2_rows_count = neighbour_num;
-    //cout << "Matrix2RowsCount : " << matrix2_rows_count << endl;
     MPI_Recv(&neighbour_num, 1, MPI_INT, 0, TAG_2, MPI_COMM_WORLD, &stat);
     matrix1_cols_count = neighbour_num;
-    //cout << "Matrix1ColsCount : " << matrix1_cols_count << endl;
     MPI_Recv(&neighbour_num, 1, MPI_INT, 0, TAG_3, MPI_COMM_WORLD, &stat);
     matrix2_cols_count = neighbour_num;
-    //cout << "Matrix2ColsCount : " << matrix2_cols_count << endl;
   }
 
+  // each processor calculates their own 2D position in mesh
   vector<int> position = getProcessor2Dposition(my_id, matrix2_cols_count);
   int & processor_coordinate1 = position[0];
   int & processor_coordinate2 = position[1];
 
   //showVectorItems(position);
 
+  // send numbers of each matrix to first row / col processors
   if (my_id == 0)
   {
     for (int i = 0; i < matrix1_rows_count; i++)
@@ -226,6 +236,7 @@ int main(int argc, char *argv[])
     }
   }
 
+  // first row / cols processors inserted received values into vectors
   if (processor_coordinate2 == 0)
   {
     for (int i = 0; i < matrix1_cols_count; i++)
@@ -250,6 +261,7 @@ int main(int argc, char *argv[])
     //showVectorItems(matrix2_first_processor);
   }
 
+  // computation of own mesh multiplication algorithm
   MPI_Barrier(MPI_COMM_WORLD); /* IMPORTANT */
   double start_time = MPI_Wtime(); // start of measuring time for experiments of own algorithm and not preparation process
   for (int i = 0; i < matrix2_rows_count; i++)
@@ -298,34 +310,34 @@ int main(int argc, char *argv[])
   MPI_Barrier(MPI_COMM_WORLD); /* IMPORTANT */
   double end_time = MPI_Wtime(); // end of measuring time for experiments
 
+  // processor except first processor send their computed c values to first processor
   if (my_id != 0)
   {
     MPI_Send(&c, 1, MPI_INT, 0, TAG_0, MPI_COMM_WORLD);
   }
   else
   {
-    computed_matrix.push_back(c);
+    computed_matrix.push_back(c); // saving c value which computed first processor
+    // receiving c values from other processors
     for (int processor_id = 1; processor_id < processor_count; processor_id++)
     {
       MPI_Recv(&neighbour_num, 1, MPI_INT, processor_id, TAG_0, MPI_COMM_WORLD, &stat);
       computed_matrix.push_back(neighbour_num);
     }
 
-    //showVectorItems(computed_matrix);
-
-    //printFinalOutput(matrix1_rows_count, matrix2_cols_count, computed_matrix);
-
-
+    // final print of calculated result to stdout
+    printFinalOutput(matrix1_rows_count, matrix2_cols_count, computed_matrix);
   }
 
 
   MPI_Finalize();
 
-
+  /*
   if(my_id == 0)
   {
-        printf("Runtime=%f\n", end_time-start_time); // printing of total running time of sorted algorithm
+        printf("Runtime=%f\n", end_time-start_time); // printing of total running time of mesh multiplication algorithm
   }
+  */
 
 
   return 0;
