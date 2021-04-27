@@ -27,20 +27,24 @@ def all_parents(tree):
     return parents
 
 # find recursively all parent nodes ids (confidence) from sequences in fasta file (e.g. from sequence XP_007318498.1)
-def findAllParentsRecursively(parents, child_key, found_parents):
+def findAllParentsRecursively(parents, child_key, found_parents, branch_lengths_to_nodes):
     #print(child_key.confidence)
     found_parent = parents.get(child_key)
-    #print(found_parent)
 
     if found_parent is None:
-        return found_parents
+        return found_parents, branch_lengths_to_nodes
 
-    #print(found_parent)
-    #print(found_parent.confidence)
+    print(found_parent)
+    print(found_parent.confidence)
     found_parents.append(int(found_parent.confidence))
+
+    if (found_parent.branch_length is not None):
+        branch_lengths_to_nodes.append(float(found_parent.branch_length))
+    #else:
+    #    branch_lengths_to_nodes.append(0)
     #print(found_parents)
 
-    return (findAllParentsRecursively(parents, found_parent, found_parents))
+    return (findAllParentsRecursively(parents, found_parent, found_parents, branch_lengths_to_nodes))
 
 # retuns dictionary in form Node : [sequence of aminoacids with biggest probability on each index]
 def getMostProbableAminoacids():
@@ -144,7 +148,9 @@ def getSequencesOnNode(tree, sequences_id, parents):
 
             if (str (clade.name) == str (sequence_id)):
                 all_parents = []
-                all_parents = findAllParentsRecursively(parents, clade, [])
+                branch_lengths_to_nodes = []
+                branch_lengths_to_nodes.append(float(clade.branch_length))
+                all_parents, branch_lengths_to_nodes = findAllParentsRecursively(parents, clade, [], branch_lengths_to_nodes)
                 print(all_parents)
 
                 for p in all_parents:
@@ -161,7 +167,25 @@ def getSequencesOnNode(tree, sequences_id, parents):
             if (str (clade.name) == str (sequence_id)):
                 #print("FOUND")
                 all_parents = []
-                all_parents = findAllParentsRecursively(parents, clade, [])
+                branch_lengths_to_nodes = []
+                branch_lengths_to_nodes.append(float(clade.branch_length))
+                all_parents, branch_lengths_to_nodes = findAllParentsRecursively(parents, clade, [], branch_lengths_to_nodes)
+                print(branch_lengths_to_nodes)
+
+                i = 0
+                branch_lengths_to_sum = []
+                # we go from leaf child sequence to most distant parent node recursively and lengths of branches are added
+                total_branch_lengths_to_nodes = []
+                for branch_length in branch_lengths_to_nodes:
+                    if (i == 0):
+                        branch_lengths_to_sum.append(branch_length)
+                    else:
+                        branch_lengths_to_sum = branch_lengths_to_nodes[0:i+1]
+                    print(branch_lengths_to_sum)
+                    total_branch_lengths_to_nodes.append(sum(branch_lengths_to_sum))
+                    i += 1
+
+                print(total_branch_lengths_to_nodes)
                 print(all_parents)
 
                 for p in all_parents:
@@ -234,6 +258,21 @@ def insertGapesToSequence(ancestrals_dict, positions_to_insert_gape):
 
         ancestrals_dict[ancestral_key] = aa_new_codes
     return ancestrals_dict
+
+# find recursively all parent nodes ids (confidence) from sequences in fasta file (e.g. from sequence XP_007318498.1)
+def findTotalBranchLengthRecursively(parents, sequence, parent_key, branch_length):
+
+    found_child = parents.get(parent_key)
+
+    branch_length += int(found_child.branch_length)
+
+    if found_child.name == sequence:
+        return branch_length
+
+    return (findTotalBranchLengthRecursively(parents, sequence, found_child, branch_length))
+
+
+
 # read phylogenetic tree
 tree = Phylo.read("./files/tree.tre", "newick")
 print(tree)
@@ -251,11 +290,13 @@ for r in records:
 
 found_leaves = []
 writeSequencesToOutputFolder(tree, ancestrals_dict, "./results/probabilities/")
-
+########################################################################################################
 # get all parents of tree
 parents = all_parents(tree)
+print(parents)
 
 sequences_on_node = getSequencesOnNode(tree, sequences_id, parents)
+print(sequences_on_node)
 
 positions_to_insert_gape = getPositionsToInsertGape(sequences_on_node, sequence_length, records)
 
@@ -263,3 +304,22 @@ positions_to_insert_gape = getPositionsToInsertGape(sequences_on_node, sequence_
 ancestrals_dict = insertGapesToSequence(ancestrals_dict, positions_to_insert_gape)
 
 writeSequencesToOutputFolder(tree, ancestrals_dict, "./results/gapes/")
+##########################################################################################################3
+parents = all_parents(tree)
+print(parents)
+
+sequences_on_node = getSequencesOnNode(tree, sequences_id, parents)
+print(sequences_on_node)
+
+
+#for node_key, connected_node_sequences in sequences_on_node.items():
+#    connected_node_sequences_list = sequences_on_node[node_key]
+
+
+positions_to_insert_gape = getPositionsToInsertGape(sequences_on_node, sequence_length, records)
+
+
+
+ancestrals_dict = insertGapesToSequence(ancestrals_dict, positions_to_insert_gape)
+
+writeSequencesToOutputFolder(tree, ancestrals_dict, "./results/gapes_branch_distances/")
