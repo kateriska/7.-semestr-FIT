@@ -38,7 +38,7 @@ with open('cgp-approx14ep.json', "r") as json_file:
                     continue
             #else:
                 #if (random() < 0.8):
-                #    continue
+                    #continue
             data[item] = []
             data[item].append({
             "cells": json_data[item]["cells"],

@@ -202,11 +202,11 @@ def writeVectors(f, g, seed_value, cells_counts):
     elif (seed_value == "csam_rca"):
         class_id = 2
     elif (seed_value == "csam_csa"):
-        class_id = 2
+        class_id = 3
     elif (seed_value == "wtm_csa"):
-        class_id = 1
+        class_id = 4
     elif (seed_value == "wtm_rca"):
-        class_id = 1
+        class_id = 5
 
     #print(cells_counts)
     with open(f, 'a') as csv_file:
@@ -326,7 +326,7 @@ with open('origin_data.json', "rb") as json_file:
         cells_counts.append(nor_count)
         cells_counts.append(xnor_count)
 
-        writeVectors(f,g,seed_value,cells_counts)
+        #writeVectors(f,g,seed_value,cells_counts)
 
         # write info to csv file
         with open('./csvFiles/chrFeatures.csv', 'a', newline='') as csv_file:
@@ -408,7 +408,7 @@ for file in glob.glob("./rodicovske8b_nasobicky/*"):
     cells_counts.append(nor_count)
     cells_counts.append(xnor_count)
 
-    writeVectors(f,g,seed_value,cells_counts)
+    #writeVectors(f,g,seed_value,cells_counts)
 
     # write info to csv file
     with open('./csvFiles/chrFeatures.csv', 'a', newline='') as csv_file:
@@ -522,7 +522,7 @@ with open('filtered_data.json', "rb") as json_file:
         cells_counts.append(nor_count)
         cells_counts.append(xnor_count)
 
-        writeVectors(f,g,seed_value,cells_counts)
+        writeVectors(f,g,seed_value,o15_variability)
 
         # write info to csv file
         with open('./csvFiles/chrFeatures.csv', 'a', newline='') as csv_file:
@@ -531,8 +531,7 @@ with open('filtered_data.json', "rb") as json_file:
 
         csv_file.close()
 
-metrics_prediction_accuracy = ((prediction_correct_count) / (prediction_correct_count + prediction_wrong_count)) * 100
-print("Accuracy of predicion based on metrics: " + str(metrics_prediction_accuracy) + " %")
+
 # print duration of program
 print("--- %s seconds ---" % (time.time() - start_time))
 
