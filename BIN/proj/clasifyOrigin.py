@@ -20,8 +20,6 @@ class Data(Dataset):
 class Net(nn.Module):
     def __init__(self,D_in,H,D_out):
         super(Net,self).__init__()
-        #self.linear1 = nn.Linear(D_in,H)
-        #self.linear2 = nn.Linear(H,D_out)
 
         self.layer_1 = nn.Linear(D_in, 512)
         self.layer_2 = nn.Linear(512, 128)
@@ -131,13 +129,13 @@ def replaceClasses(targets):
     print(targets)
     return targets
 
-vectors = np.genfromtxt('./csvFiles/allVectorsSixClasses.csv',delimiter=",", dtype=int, skip_header=1)
-targets = np.genfromtxt('./csvFiles/allClassesSixClasses.csv',dtype=int, skip_header=1)
+vectors = np.genfromtxt('./csvFiles/allVectorsO15.csv',delimiter=",", dtype=int, skip_header=1)
+targets = np.genfromtxt('./csvFiles/allClassesO15.csv',dtype=int, skip_header=1)
 print(vectors.dtype)
 print(targets.dtype)
-targets = replaceClasses(targets)
+#targets = replaceClasses(targets)
 
-vectors, targets = reduceData(vectors, targets)
+#vectors, targets = reduceData(vectors, targets)
 print(vectors.dtype)
 print(targets.dtype)
 
@@ -183,7 +181,7 @@ print(data_set.x[1:10])
 
 input_dim = 8     # how many Variables are in the dataset
 hidden_dim = 4 # hidden layers
-output_dim = 3   # number of classes
+output_dim = 6   # number of classes
 
 model = Net(input_dim,hidden_dim,output_dim)
 print('W:',list(model.parameters())[0].size())
@@ -193,38 +191,38 @@ criterion = nn.CrossEntropyLoss()
 learning_rate = 0.001
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
-n_epochs = 5000
+n_epochs = 2
 loss_list = []
 
-#n_epochs
+epochs_list = []
+accuracies = []
+losses = []
 accuracy = 0
 for epoch in range(n_epochs):
+    epochs_list.append(epoch)
+
+    minibatches_iterations = 0
+    losses_minibatches_sum = 0
     for x, y in trainloader:
         #clear gradient
         optimizer.zero_grad()
         #make a prediction
         z = model(x)
-        # calculate loss, da Cross Entropy benutzt wird muss ich in den loss Klassen vorhersagen,
-        # also Wahrscheinlichkeit pro Klasse. Das mach torch.max(y,1)[1])
         loss = criterion(z,y)
         # calculate gradients of parameters
         loss.backward()
         # update parameters
         optimizer.step()
 
-        loss_list.append(loss.data)
+        losses_minibatches_sum = losses_minibatches_sum + loss.item() # accumulate losses of minibatches
+        minibatches_iterations += 1
 
-
-        print('epoch {}, loss {}'.format(epoch, loss.item()))
 
     z = model(x_val)
     values, indices = torch.max(z.data,1)
 
-
     np_predictions = indices.detach().numpy()
     np_targets = y_val.detach().numpy()
-    #print(np_predictions)
-    #print(np_targets)
 
     correctly_classified = 0
     for target, prediction in zip(np_targets, np_predictions):
@@ -234,11 +232,30 @@ for epoch in range(n_epochs):
     #print(correctly_classified)
     new_accuracy = (correctly_classified / np.shape(np_targets)[0])
 
-    print(new_accuracy)
+    #print(new_accuracy)
+    accuracies.append(new_accuracy)
 
     if (new_accuracy > accuracy):
         best_model = copy.deepcopy(model)
 
+    loss_average = losses_minibatches_sum / minibatches_iterations
+
+    losses.append(loss_average)
+
+    print('epoch {}, loss {}, accuracy {}'.format(epoch, loss_average, new_accuracy))
+
+figure = plt.figure(figsize=(10, 10))
+performance_plot = figure.add_subplot(2,1,1)
+performance_plot.plot(epochs_list, accuracies, color = "orchid", label="accuracy development")
+performance_plot.set_xlabel('Count of epochs', fontsize=8, horizontalalignment='right', x=1.0)
+performance_plot.legend(prop={'size': 10})
+performance_plot.set_title('Single Feature Logistic Regression Performance', fontsize=10)
+
+performance_plot2 = figure.add_subplot(2,1,2)
+performance_plot2.plot(epochs_list, losses, color = "indigo", label="loss development")
+performance_plot2.set_xlabel('Count of epochs', fontsize=8, horizontalalignment='right', x=1.0)
+performance_plot2.legend(prop={'size': 10})
+plt.savefig('./mlpGraphs/mlpGraphs.png')
 
 z = best_model(x_test)
 values, indices = torch.max(z.data,1)
