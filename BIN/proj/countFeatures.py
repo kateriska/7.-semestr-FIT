@@ -8,14 +8,14 @@ import scipy.stats
 import time
 import numpy as np
 
-# parse cell and get ids of their two inputs and one output
-def parseCellIO(cell):
+# parse gate and get ids of their two inputs and one output
+def parseGateIO(gate):
     # ([16]7,15,2)
-    gate_id = int (cell[1:cell.find(']')])
-    input1 = int (cell[cell.find(']') + 1:cell.find(',')])
-    input2 = int (cell[cell.find(',') + 1:cell.rfind(',')])
+    gate_id = int (gate[1:gate.find(']')])
+    input1 = int (gate[gate.find(']') + 1:gate.find(',')])
+    input2 = int (gate[gate.find(',') + 1:gate.rfind(',')])
 
-    # 16 (output of cell), 7, 15
+    # 16 (output of gate), 7, 15
     return gate_id, input1, input2
 
 # get interesting metrics for multiplier from json file
@@ -44,25 +44,25 @@ def getCompressedSize(chr_path, file_substr):
     compressed_file_size = os.path.getsize("./compressedChrFiles/" + file_substr + '.zip')
     return compressed_file_size
 
-# find list of used cells by cgp
-def findUsedCells(cgp_gates_codes_list):
+# find list of used gates by cgp
+def findUsedGates(cgp_gates_codes_list):
     used_cgp_gates_codes_list = []
     for cgp_gates_code in cgp_gates_codes_list:
-        gate_id, input1, input2 = parseCellIO(cgp_gates_code)
+        gate_id, input1, input2 = parseGateIO(cgp_gates_code)
 
         for cgp_gates_code2 in cgp_gates_codes_list:
             if (cgp_gates_code == cgp_gates_code2):
                 continue
-            gate_id2, input12, input22  = parseCellIO(cgp_gates_code2)
+            gate_id2, input12, input22  = parseGateIO(cgp_gates_code2)
 
             if (input12 == gate_id or input22 == gate_id or gate_id in outputs_list):
                 used_cgp_gates_codes_list.append(cgp_gates_code)
                 break
     return used_cgp_gates_codes_list
 
-# find types of used cells
-def findUsedCellsTypes(used_cgp_gates_codes_list):
-    # find count of used types of cells
+# find types of used gates
+def findUsedGatesTypes(used_cgp_gates_codes_list):
+    # find count of used types of gates
     '''
     Kódy použitých hradel (mapování v CGP s 2-
     vstupovými uzly)
@@ -84,8 +84,8 @@ def findUsedCellsTypes(used_cgp_gates_codes_list):
     nor_count = 0
     xnor_count = 0
 
-    xor_cells = []
-    and_cells = []
+    xor_gates = []
+    and_gates = []
 
     for cgp_gates_code in used_cgp_gates_codes_list:
         used_gate_id_str = cgp_gates_code[cgp_gates_code.rfind(',')+1:len(cgp_gates_code)]
@@ -97,12 +97,12 @@ def findUsedCellsTypes(used_cgp_gates_codes_list):
             inva_count += 1
         elif (used_gate_id == 2):
             and_count += 1
-            and_cells.append(cgp_gates_code)
+            and_gates.append(cgp_gates_code)
         elif (used_gate_id == 3):
             or_count += 1
         elif (used_gate_id == 4):
             xor_count += 1
-            xor_cells.append(cgp_gates_code)
+            xor_gates.append(cgp_gates_code)
         elif (used_gate_id == 5):
             nand_count += 1
         elif (used_gate_id == 6):
@@ -110,56 +110,56 @@ def findUsedCellsTypes(used_cgp_gates_codes_list):
         elif (used_gate_id == 7):
             xnor_count += 1
 
-    return ida_count, inva_count, and_count, or_count, xor_count, nand_count, nor_count, xnor_count, xor_cells, and_cells
+    return ida_count, inva_count, and_count, or_count, xor_count, nand_count, nor_count, xnor_count, xor_gates, and_gates
 
 # count of subparts a XOR b XOR c XOR d
-def getXorXorXorCount(xor_cells):
+def getXorXorXorCount(xor_gates):
     xor_xor_xor_count = 0
-    for xor_cell in xor_cells:
-        gate_id, input1, input2 = parseCellIO(xor_cell)
+    for xor_gate in xor_gates:
+        gate_id, input1, input2 = parseGateIO(xor_gate)
 
-        for xor_cell2 in xor_cells:
-            if (xor_cell == xor_cell2):
+        for xor_gate2 in xor_gates:
+            if (xor_gate == xor_gate2):
                 continue
-            gate_id2, input12, input22 = parseCellIO(xor_cell2)
+            gate_id2, input12, input22 = parseGateIO(xor_gate2)
 
             if (gate_id == input12 or gate_id == input22): # a XOR b XOR c
-                for xor_cell3 in xor_cells:
-                    if (xor_cell2 == xor_cell3):
+                for xor_gate3 in xor_gates:
+                    if (xor_gate2 == xor_gate3):
                         continue
-                    gate_id3, input13, input23 = parseCellIO(xor_cell3)
+                    gate_id3, input13, input23 = parseGateIO(xor_gate3)
 
                     if (gate_id2 == input13 or gate_id2 == input23):
-                        #print(xor_cell + "->" + xor_cell2 + "->" +xor_cell3)
+                        #print(xor_gate + "->" + xor_gate2 + "->" +xor_gate3)
                         xor_xor_xor_count += 1
     #print("XOR XOR XOR count " + str(xor_xor_xor_count))
     return xor_xor_xor_count
 
 # count of subparts (a AND b) XOR (c AND d)
-def getAndXorAndCount(xor_cells, and_cells):
+def getAndXorAndCount(xor_gates, and_gates):
     and_xor_and_count = 0
-    for and_cell in and_cells:
-        gate_id, input1, input2 = parseCellIO(and_cell)
+    for and_gate in and_gates:
+        gate_id, input1, input2 = parseGateIO(and_gate)
 
-        for xor_cell2 in xor_cells:
-            gate_id2, input12, input22 = parseCellIO(xor_cell2)
+        for xor_gate2 in xor_gates:
+            gate_id2, input12, input22 = parseGateIO(xor_gate2)
 
             if (gate_id == input12 or gate_id == input22): # a AND b XOR
-                for and_cell3 in and_cells:
-                    if (and_cell == and_cell3):
+                for and_gate3 in and_gates:
+                    if (and_gate == and_gate3):
                         continue
-                    gate_id3, input13, input23 = parseCellIO(and_cell3)
+                    gate_id3, input13, input23 = parseGateIO(and_gate3)
 
                     if (gate_id3 == input12 or gate_id3 == input22):
-                        #print(and_cell + "->" + xor_cell2 + "->" +and_cell3)
+                        #print(and_gate + "->" + xor_gate2 + "->" +and_gate3)
                         and_xor_and_count += 1
     #print("AND XOR AND count " + str(and_xor_and_count))
     return and_xor_and_count
 
-# count distance between parent vector of MSB output cell types and approximated multiplier
-def computeO15variability(seed, o15_origin_dict, o15_cells):
+# count distance between parent vector of MSB output gate types and approximated multiplier
+def computeO15variability(seed, o15_origin_dict, o15_gates):
     o15_variability = []
-    for origin_vector, vector in zip(o15_origin_dict[seed], o15_cells):
+    for origin_vector, vector in zip(o15_origin_dict[seed], o15_gates):
         o15_variability.append(abs(origin_vector - vector))
 
     return o15_variability
@@ -171,30 +171,29 @@ def metricsOriginPredict(seed, vectors_origin_dict, delay_value):
         absolute_distance = abs(value - delay_value)
         absolute_distance_dict[key] = absolute_distance
 
-    #print(absolute_distance_dict)
     predicted_origin = min(absolute_distance_dict, key=lambda k: absolute_distance_dict[k])
     return predicted_origin
 
-# recursively compute for cell on which final output is connected (#%o O15,O14,O13,O12,O11,O10,O9,O8,O7,O6,O5,O4,O3,O2,O1,O0)
-def computeCellsConnectedOutput(used_cgp_gates_codes_list, outputs_list, cell):
+# recursively compute for gate on which final output is connected (#%o O15,O14,O13,O12,O11,O10,O9,O8,O7,O6,O5,O4,O3,O2,O1,O0)
+def computeGatesConnectedOutput(used_cgp_gates_codes_list, outputs_list, gate):
     next_gate_found = False
 
-    gate_id, input1, input2 = parseCellIO(cell)
+    gate_id, input1, input2 = parseGateIO(gate)
 
-    for cell2 in used_cgp_gates_codes_list:
-        if (cell == cell2):
+    for gate2 in used_cgp_gates_codes_list:
+        if (gate == gate2):
             continue
-        gate_id2, input12, input22 = parseCellIO(cell2)
+        gate_id2, input12, input22 = parseGateIO(gate2)
 
         if (gate_id == input12 or gate_id == input22):
             next_gate_found = True
-            return computeCellsConnectedOutput(used_cgp_gates_codes_list, outputs_list, cell2)
+            return computeGatesConnectedOutput(used_cgp_gates_codes_list, outputs_list, gate2)
     if (next_gate_found == False):
         if gate_id in outputs_list:
             return gate_id
 
 # write interesting vectors for csv file as train data for classifier of origin of multiplier
-def writeVectors(f, g, seed_value, cells_counts):
+def writeVectors(f, g, seed_value, gates_counts):
     if (seed_value == "rcam"):
         class_id = 0
     elif (seed_value == "wtm_cla"):
@@ -208,10 +207,10 @@ def writeVectors(f, g, seed_value, cells_counts):
     elif (seed_value == "wtm_rca"):
         class_id = 5
 
-    #print(cells_counts)
+    #print(gates_counts)
     with open(f, 'a') as csv_file:
         writer = csv.writer(csv_file)
-        writer.writerow(cells_counts)
+        writer.writerow(gates_counts)
     csv_file.close()
 
     with open(g, 'a') as csv_file:
@@ -233,7 +232,7 @@ g = "./csvFiles/allClasses.csv"
 # write head of csv files
 with open(csv_path, 'w+') as csv_file:
     writer = csv.writer(csv_file)
-    writer.writerow(["Name", "IDA Count", "INVA Count", "AND2 Count", "OR2 Count", "XOR2 Count", "NAND2 Count", "NOR2 Count", "XNOR2 Count", "Count of Used Cells", "Compressed Chr Size", "a XOR b XOR c XOR d Count", "(a AND b) XOR (c AND d) Count"])
+    writer.writerow(["Name", "IDA Count", "INVA Count", "AND2 Count", "OR2 Count", "XOR2 Count", "NAND2 Count", "NOR2 Count", "XNOR2 Count", "Count of Used Gates", "Compressed Chr Size", "a XOR b XOR c XOR d Count", "(a AND b) XOR (c AND d) Count", "Variability of Implementation of the Highest Bit of Product", "[Sum of All Gates, Sum of Used Gates by CGP]"])
 
 csv_file.close()
 
@@ -251,7 +250,7 @@ csv_file.close()
 
 #################### PARENT MULTIPLIERS ########################################
 o15_origin_dict = {}
-#vectors_origin_dict = {}
+
 # iterate through json file with three origin multipliers which are in original json
 with open('origin_data.json', "rb") as json_file:
     json_data = orjson.loads(json_file.read())
@@ -260,8 +259,6 @@ with open('origin_data.json', "rb") as json_file:
         mae_value, wce_value, wce_percent_value, area_value, delay_value, pwr_value, levels_value = jsonMetrics(json_data, file_substr)
 
         compressed_file_size = getCompressedSize(chr_path, file_substr)
-
-        #file_substr = file.split('/')[-1] # get name of processed file
         print(file_substr)
 
         # open chr file for computing features based on chr file
@@ -280,70 +277,67 @@ with open('origin_data.json', "rb") as json_file:
             cgp_gates_codes_list = cgp_gates_codes.split(')(')
             cgp_gates_codes_list = cgp_gates_codes_list[:-1]
 
-        # find used cells by cgp
-        used_cgp_gates_codes_list = findUsedCells(cgp_gates_codes_list)
+        all_gates_size = len(cgp_gates_codes_list)
+        # find used gates by cgp
+        used_cgp_gates_codes_list = findUsedGates(cgp_gates_codes_list)
+        used_gates_size = len(used_cgp_gates_codes_list)
 
-        used_cells_size = len(used_cgp_gates_codes_list)
-        #print("Size of used cells: " + str(len(used_cgp_gates_codes_list)))
+        # get characteristic vector of implementation - [count of all gates, count of used gates by CGP]
+        all_used_gates_vector = []
+        all_used_gates_vector.append(all_gates_size)
+        all_used_gates_vector.append(used_gates_size)
 
-        xor_cells = []
-        and_cells = []
+        xor_gates = []
+        and_gates = []
 
         seed_value = json_data[file_substr][0]["seed"] # type of origin of multiplier
-        # find count of used types of cells
-        ida_count, inva_count, and_count, or_count, xor_count, nand_count, nor_count, xnor_count, xor_cells, and_cells = findUsedCellsTypes(used_cgp_gates_codes_list)
+        # find count of used types of gates
+        ida_count, inva_count, and_count, or_count, xor_count, nand_count, nor_count, xnor_count, xor_gates, and_gates = findUsedGatesTypes(used_cgp_gates_codes_list)
 
-        o15_cells = []
+        # compute output (O0 - O15) of all gates
+        o15_gates = []
         o15_output = outputs_list[0]
 
-        for cell in used_cgp_gates_codes_list:
-            cell_connected_output = computeCellsConnectedOutput(used_cgp_gates_codes_list, outputs_list, cell)
-            #print("Cell: " + cell)
-            #print("Connected Output: " + str(cell_connected_output))
+        for gate in used_cgp_gates_codes_list:
+            gate_connected_output = computeGatesConnectedOutput(used_cgp_gates_codes_list, outputs_list, gate)
+            if (gate_connected_output == o15_output):
+                o15_gates.append(gate)
 
-            if (cell_connected_output == o15_output):
-                o15_cells.append(cell)
-
-        # find count of used types of cells for O15 output and add this vector to origin dict
-        ida_count_o15, inva_count_o15, and_count_o15, or_count_o15, xor_count_o15, nand_count_o15, nor_count_o15, xnor_count_o15, xor_cells_o15, and_cells_o15 = findUsedCellsTypes(o15_cells)
+        # find count of used types of gates for O15 output and add this vector to origin dict
+        ida_count_o15, inva_count_o15, and_count_o15, or_count_o15, xor_count_o15, nand_count_o15, nor_count_o15, xnor_count_o15, xor_gates_o15, and_gates_o15 = findUsedGatesTypes(o15_gates)
         o15_origin_dict[seed_value] = [ida_count_o15, inva_count_o15, and_count_o15, or_count_o15, xor_count_o15, nand_count_o15, nor_count_o15, xnor_count_o15]
-        #vectors_origin_dict[seed_value] = delay_value
 
         # count of subparts a XOR b XOR c XOR d
-        xor_xor_xor_count = getXorXorXorCount(xor_cells)
+        xor_xor_xor_count = getXorXorXorCount(xor_gates)
         #print(xor_xor_xor_count)
 
         # count of subparts (a AND b) XOR (c AND d)
-        and_xor_and_count = getAndXorAndCount(xor_cells, and_cells)
+        and_xor_and_count = getAndXorAndCount(xor_gates, and_gates)
 
-        cells_counts = list()
-        cells_counts.append(ida_count)
-        cells_counts.append(inva_count)
-        cells_counts.append(and_count)
-        cells_counts.append(or_count)
-        cells_counts.append(xor_count)
-        cells_counts.append(nand_count)
-        cells_counts.append(nor_count)
-        cells_counts.append(xnor_count)
+        gates_counts = list()
+        gates_counts.append(ida_count)
+        gates_counts.append(inva_count)
+        gates_counts.append(and_count)
+        gates_counts.append(or_count)
+        gates_counts.append(xor_count)
+        gates_counts.append(nand_count)
+        gates_counts.append(nor_count)
+        gates_counts.append(xnor_count)
 
-        #writeVectors(f,g,seed_value,cells_counts)
+        #writeVectors(f,g,seed_value,gates_counts)
 
         # write info to csv file
         with open('./csvFiles/chrFeatures.csv', 'a', newline='') as csv_file:
             writer = csv.writer(csv_file)
-            writer.writerow([file_substr, ida_count, inva_count, and_count, or_count, xor_count, nand_count, nor_count, xnor_count, used_cells_size, compressed_file_size, xor_xor_xor_count, and_xor_and_count, "ORIGIN MULTIPLIER"])
+            writer.writerow([file_substr, ida_count, inva_count, and_count, or_count, xor_count, nand_count, nor_count, xnor_count, used_gates_size, compressed_file_size, xor_xor_xor_count, and_xor_and_count, "ORIGIN MULTIPLIER", all_used_gates_vector])
 
         csv_file.close()
 
-#print(o15_origin_dict)
-#exit(0)
 
 for file in glob.glob("./rodicovske8b_nasobicky/*"):
     file_substr = file.split('/')[-1] # get name of processed file
     file_substr_without_chr = file_substr[0:file_substr.rfind('.')]
     compressed_file_size = getCompressedSize(chr_origin_path, file_substr_without_chr)
-
-    #file_substr = file.split('/')[-1] # get name of processed file
     print(file_substr)
 
     # open chr file for computing features based on chr file
@@ -362,64 +356,62 @@ for file in glob.glob("./rodicovske8b_nasobicky/*"):
         cgp_gates_codes_list = cgp_gates_codes.split(')(')
         cgp_gates_codes_list = cgp_gates_codes_list[:-1]
 
-    # find used cells by cgp
-    used_cgp_gates_codes_list = findUsedCells(cgp_gates_codes_list)
+    all_gates_size = len(cgp_gates_codes_list)
+    # find used gates by cgp
+    used_cgp_gates_codes_list = findUsedGates(cgp_gates_codes_list)
 
-    used_cells_size = len(used_cgp_gates_codes_list)
-    #print("Size of used cells: " + str(len(used_cgp_gates_codes_list)))
+    used_gates_size = len(used_cgp_gates_codes_list)
+    all_used_gates_vector = []
+    all_used_gates_vector.append(all_gates_size)
+    all_used_gates_vector.append(used_gates_size)
 
-    xor_cells = []
-    and_cells = []
+    xor_gates = []
+    and_gates = []
 
     seed_value = file_substr[2:file_substr.find('-')]
-    #print(seed_value)
-    # find count of used types of cells
-    ida_count, inva_count, and_count, or_count, xor_count, nand_count, nor_count, xnor_count, xor_cells, and_cells = findUsedCellsTypes(used_cgp_gates_codes_list)
+    # find count of used types of gates
+    ida_count, inva_count, and_count, or_count, xor_count, nand_count, nor_count, xnor_count, xor_gates, and_gates = findUsedGatesTypes(used_cgp_gates_codes_list)
 
-    o15_cells = []
+    o15_gates = []
     o15_output = outputs_list[0]
 
-    for cell in used_cgp_gates_codes_list:
-        cell_connected_output = computeCellsConnectedOutput(used_cgp_gates_codes_list, outputs_list, cell)
-        #print("Cell: " + cell)
-        #print("Connected Output: " + str(cell_connected_output))
+    for gate in used_cgp_gates_codes_list:
+        gate_connected_output = computeGatesConnectedOutput(used_cgp_gates_codes_list, outputs_list, gate)
 
-        if (cell_connected_output == o15_output):
-            o15_cells.append(cell)
+        if (gate_connected_output == o15_output):
+            o15_gates.append(gate)
 
-    # find count of used types of cells for O15 output and add this vector to origin dict
-    ida_count_o15, inva_count_o15, and_count_o15, or_count_o15, xor_count_o15, nand_count_o15, nor_count_o15, xnor_count_o15, xor_cells_o15, and_cells_o15 = findUsedCellsTypes(o15_cells)
+    # find count of used types of gates for O15 output and add this vector to origin dict
+    ida_count_o15, inva_count_o15, and_count_o15, or_count_o15, xor_count_o15, nand_count_o15, nor_count_o15, xnor_count_o15, xor_gates_o15, and_gates_o15 = findUsedGatesTypes(o15_gates)
     o15_origin_dict[seed_value] = [ida_count_o15, inva_count_o15, and_count_o15, or_count_o15, xor_count_o15, nand_count_o15, nor_count_o15, xnor_count_o15]
-    #vectors_origin_dict[seed_value] = delay_value
+
     # count of subparts a XOR b XOR c XOR d
-    xor_xor_xor_count = getXorXorXorCount(xor_cells)
-    #print(xor_xor_xor_count)
+    xor_xor_xor_count = getXorXorXorCount(xor_gates)
 
     # count of subparts (a AND b) XOR (c AND d)
-    and_xor_and_count = getAndXorAndCount(xor_cells, and_cells)
+    and_xor_and_count = getAndXorAndCount(xor_gates, and_gates)
 
-    cells_counts = list()
-    cells_counts.append(ida_count)
-    cells_counts.append(inva_count)
-    cells_counts.append(and_count)
-    cells_counts.append(or_count)
-    cells_counts.append(xor_count)
-    cells_counts.append(nand_count)
-    cells_counts.append(nor_count)
-    cells_counts.append(xnor_count)
+    gates_counts = list()
+    gates_counts.append(ida_count)
+    gates_counts.append(inva_count)
+    gates_counts.append(and_count)
+    gates_counts.append(or_count)
+    gates_counts.append(xor_count)
+    gates_counts.append(nand_count)
+    gates_counts.append(nor_count)
+    gates_counts.append(xnor_count)
 
-    #writeVectors(f,g,seed_value,cells_counts)
+    #writeVectors(f,g,seed_value,gates_counts)
 
     # write info to csv file
     with open('./csvFiles/chrFeatures.csv', 'a', newline='') as csv_file:
         writer = csv.writer(csv_file)
-        writer.writerow([file_substr, ida_count, inva_count, and_count, or_count, xor_count, nand_count, nor_count, xnor_count, used_cells_size, compressed_file_size, xor_xor_xor_count, and_xor_and_count, "ORIGIN MULTIPLIER"])
+        writer.writerow([file_substr, ida_count, inva_count, and_count, or_count, xor_count, nand_count, nor_count, xnor_count, used_gates_size, compressed_file_size, xor_xor_xor_count, and_xor_and_count, "ORIGIN MULTIPLIER", all_used_gates_vector])
 
     csv_file.close()
 
 
 print(o15_origin_dict)
-#exit(0)
 
 #################### APROXIMATED EVOLVED MULTIPLIERS ########################################
 xor_values = []
@@ -452,7 +444,6 @@ with open('filtered_data.json', "rb") as json_file:
 
         compressed_file_size = getCompressedSize(chr_path, file_substr)
 
-        #file_substr = file.split('/')[-1] # get name of processed file
         print(file_substr)
 
         # open chr file for computing features based on chr file
@@ -471,63 +462,63 @@ with open('filtered_data.json', "rb") as json_file:
             cgp_gates_codes_list = cgp_gates_codes.split(')(')
             cgp_gates_codes_list = cgp_gates_codes_list[:-1]
 
-        # find used cells by cgp
-        used_cgp_gates_codes_list = findUsedCells(cgp_gates_codes_list)
+        all_gates_size = len(cgp_gates_codes_list)
+        # find used gates by cgp
+        used_cgp_gates_codes_list = findUsedGates(cgp_gates_codes_list)
 
-        used_cells_size = len(used_cgp_gates_codes_list)
-        #print("Size of used cells: " + str(len(used_cgp_gates_codes_list)))
+        used_gates_size = len(used_cgp_gates_codes_list)
+        all_used_gates_vector = []
+        all_used_gates_vector.append(all_gates_size)
+        all_used_gates_vector.append(used_gates_size)
 
-        xor_cells = []
-        and_cells = []
+        xor_gates = []
+        and_gates = []
 
         seed_value = json_data[file_substr][0]["seed"] # type of origin of multiplier
 
-        # find count of used types of cells
-        ida_count, inva_count, and_count, or_count, xor_count, nand_count, nor_count, xnor_count, xor_cells, and_cells = findUsedCellsTypes(used_cgp_gates_codes_list)
+        # find count of used types of gates
+        ida_count, inva_count, and_count, or_count, xor_count, nand_count, nor_count, xnor_count, xor_gates, and_gates = findUsedGatesTypes(used_cgp_gates_codes_list)
 
-        o15_cells = []
+        o15_gates = []
         o15_output = outputs_list[0]
 
-        for cell in used_cgp_gates_codes_list:
-            cell_connected_output = computeCellsConnectedOutput(used_cgp_gates_codes_list, outputs_list, cell)
-            #print("Cell: " + cell)
-            #print("Connected Output: " + str(cell_connected_output))
+        for gate in used_cgp_gates_codes_list:
+            gate_connected_output = computeGatesConnectedOutput(used_cgp_gates_codes_list, outputs_list, gate)
 
-            if (cell_connected_output == o15_output):
-                o15_cells.append(cell)
+            if (gate_connected_output == o15_output):
+                o15_gates.append(gate)
 
-        # find count of used types of cells for O15 output
-        ida_count_o15, inva_count_o15, and_count_o15, or_count_o15, xor_count_o15, nand_count_o15, nor_count_o15, xnor_count_o15, xor_cells_o15, and_cells_o15 = findUsedCellsTypes(o15_cells)
-        o15_variability = computeO15variability(seed_value, o15_origin_dict, [ida_count_o15, inva_count_o15, and_count_o15, or_count_o15, xor_count_o15, nand_count_o15, nor_count_o15, xnor_count_o15, xor_cells_o15, and_cells_o15])
+        # find count of used types of gates for O15 output
+        ida_count_o15, inva_count_o15, and_count_o15, or_count_o15, xor_count_o15, nand_count_o15, nor_count_o15, xnor_count_o15, xor_gates_o15, and_gates_o15 = findUsedGatesTypes(o15_gates)
+        o15_variability = computeO15variability(seed_value, o15_origin_dict, [ida_count_o15, inva_count_o15, and_count_o15, or_count_o15, xor_count_o15, nand_count_o15, nor_count_o15, xnor_count_o15, xor_gates_o15, and_gates_o15])
 
         # count of subparts a XOR b XOR c XOR d
-        xor_xor_xor_count = getXorXorXorCount(xor_cells)
-        #print(xor_xor_xor_count)
+        xor_xor_xor_count = getXorXorXorCount(xor_gates)
 
         # count of subparts (a AND b) XOR (c AND d)
-        and_xor_and_count = getAndXorAndCount(xor_cells, and_cells)
+        and_xor_and_count = getAndXorAndCount(xor_gates, and_gates)
 
         xor_values.append(xor_count)
         compressed_chr_sizes.append(compressed_file_size)
         xor_xor_xor_values.append(xor_xor_xor_count)
         and_xor_and_count_values.append(and_xor_and_count)
 
-        cells_counts = list()
-        cells_counts.append(ida_count)
-        cells_counts.append(inva_count)
-        cells_counts.append(and_count)
-        cells_counts.append(or_count)
-        cells_counts.append(xor_count)
-        cells_counts.append(nand_count)
-        cells_counts.append(nor_count)
-        cells_counts.append(xnor_count)
+        gates_counts = list()
+        gates_counts.append(ida_count)
+        gates_counts.append(inva_count)
+        gates_counts.append(and_count)
+        gates_counts.append(or_count)
+        gates_counts.append(xor_count)
+        gates_counts.append(nand_count)
+        gates_counts.append(nor_count)
+        gates_counts.append(xnor_count)
 
         writeVectors(f,g,seed_value,o15_variability)
 
         # write info to csv file
         with open('./csvFiles/chrFeatures.csv', 'a', newline='') as csv_file:
             writer = csv.writer(csv_file)
-            writer.writerow([file_substr, ida_count, inva_count, and_count, or_count, xor_count, nand_count, nor_count, xnor_count, used_cells_size, compressed_file_size, xor_xor_xor_count, and_xor_and_count, o15_variability])
+            writer.writerow([file_substr, ida_count, inva_count, and_count, or_count, xor_count, nand_count, nor_count, xnor_count, used_gates_size, compressed_file_size, xor_xor_xor_count, and_xor_and_count, o15_variability, all_used_gates_vector])
 
         csv_file.close()
 
