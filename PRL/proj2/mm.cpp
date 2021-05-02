@@ -1,3 +1,10 @@
+/*
+Author - Katerina Fortova (xforto00)
+Course - Parallel and Distributed Algorithms
+Project - Mesh Multiplication
+Academic Year - 2020 / 21
+*/
+
 #include <mpi.h>
 #include <iostream>
 #include <fstream>
@@ -104,6 +111,7 @@ int get1Dposition(int matrix_cols_count, int i, int j)
 // print final output of calculated matrix to stdout
 void printFinalOutput(int matrix1_rows_count, int matrix2_cols_count, vector<int> computed_matrix)
 {
+  // print count of rows : count of cols of multiplied matrix
   cout << matrix1_rows_count << ":" << matrix2_cols_count << endl;
 
   int computed_matrix_cols_count = 0;
