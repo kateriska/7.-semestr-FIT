@@ -1,0 +1,50 @@
+Author: Katerina Fortova
+Project Name: Relationship Analysis of Approximated Circuits
+Course: Bio-Inspired Computers
+Academic Year: 2020/21
+
+Set Up of Python Virtual Environment:
+
+How to Run Program:
+python filterJson.py rcam|wtmcla|wtmcsa|all -n|-p [number]
+
+Program filterJson.py is used for filtering objects and interesting metrics from cgp-approx14ep.json. This is done also because of faster searching
+through json file in next step.
+
+rcam|wtmcla|wtmcsa|all are types of filtered multiplier types or "all" when all types are used
+-n [number] - how many multipliers should be filtered e.g. -n 10
+-p [number] - which ratio of multipliers should be filtered (number in range 0-1) e.g. -p 0.5 (half of multipliers is filtered)
+
+examples of use:
+python filterJson.py all -p 1 - filters all approximated multipliers (more than 24 000)
+python filterJson.py all -n 100 - randomly selects from all approximated multipliers 100 of them
+python filterJson.py rcam -p 0.25 - randomly selects from rcam approximated multipliers 25 % of them
+
+Now filtered json is created and could be next analyzed:
+python countFeatures.py
+
+This program counts and write to csv file:
+Count of Used Gates Types by CGP (INVA, AND2, OR2, XOR2, NAND2, NOR2, XNOR2)
+Count of All Used Gates by CGP
+Size of Compressed Chr File
+Count of Subparts a XOR b XOR c XOR d
+Count of Subparts (a AND b) XOR (c AND d)
+Variability of Implementation of the Highest Bit of Product (this is most computationally intensive because of searching possible O15 outputs on all gates)
+Feature vector - [Sum of All Gates, Sum of Used Gates by CGP]
+
+In the end program shows graphs and correlations based on Pearson Correlation Coefficient:
+
+
+Classification of Origin (Seed) of approximated multiplier:
+python clasifyOrigin.py
+This program uses vectors of Variability of Implementation of the Highest Bit of Product and their classes - seed of approximated multiplier
+6 classes:
+0 - rcam
+1 - wtm_cla
+2 - csam_rca
+3 - csam_csa
+4 - wtm_csa
+5 - wtm_rca
+
+Multiclass classifier is implemented as MLP Network with combination of relu and softmax activation functions and cross entropy loss.
+Average accuracy is around 80 %.
