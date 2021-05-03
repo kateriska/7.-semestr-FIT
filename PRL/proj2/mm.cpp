@@ -201,14 +201,10 @@ int main(int argc, char *argv[])
   else
   {
     // other processors in mesh receive dimensions of each matrix
-    MPI_Recv(&neighbour_num, 1, MPI_INT, 0, TAG_0, MPI_COMM_WORLD, &stat);
-    matrix1_rows_count = neighbour_num;
-    MPI_Recv(&neighbour_num, 1, MPI_INT, 0, TAG_1, MPI_COMM_WORLD, &stat);
-    matrix2_rows_count = neighbour_num;
-    MPI_Recv(&neighbour_num, 1, MPI_INT, 0, TAG_2, MPI_COMM_WORLD, &stat);
-    matrix1_cols_count = neighbour_num;
-    MPI_Recv(&neighbour_num, 1, MPI_INT, 0, TAG_3, MPI_COMM_WORLD, &stat);
-    matrix2_cols_count = neighbour_num;
+    MPI_Recv(&matrix1_rows_count, 1, MPI_INT, 0, TAG_0, MPI_COMM_WORLD, &stat);
+    MPI_Recv(&matrix2_rows_count, 1, MPI_INT, 0, TAG_1, MPI_COMM_WORLD, &stat);
+    MPI_Recv(&matrix1_cols_count, 1, MPI_INT, 0, TAG_2, MPI_COMM_WORLD, &stat);
+    MPI_Recv(&matrix2_cols_count, 1, MPI_INT, 0, TAG_3, MPI_COMM_WORLD, &stat);
   }
 
   // each processor calculates their own 2D position in mesh
@@ -282,8 +278,7 @@ int main(int argc, char *argv[])
     else
     {
       neighbour_id = get1Dposition(matrix2_cols_count, processor_coordinate1, processor_coordinate2 - 1);
-      MPI_Recv(&neighbour_num, 1, MPI_INT, neighbour_id, TAG_1, MPI_COMM_WORLD, &stat);
-      b = neighbour_num;
+      MPI_Recv(&b, 1, MPI_INT, neighbour_id, TAG_1, MPI_COMM_WORLD, &stat);
     }
 
     if (processor_coordinate1 == 0)
@@ -294,8 +289,7 @@ int main(int argc, char *argv[])
     else
     {
       neighbour_id = get1Dposition(matrix2_cols_count, processor_coordinate1 - 1, processor_coordinate2);
-      MPI_Recv(&neighbour_num, 1, MPI_INT, neighbour_id, TAG_0, MPI_COMM_WORLD, &stat);
-      a = neighbour_num;
+      MPI_Recv(&a, 1, MPI_INT, neighbour_id, TAG_0, MPI_COMM_WORLD, &stat);
     }
 
     c = c + (a * b);
@@ -329,8 +323,8 @@ int main(int argc, char *argv[])
     // receiving c values from other processors
     for (int processor_id = 1; processor_id < processor_count; processor_id++)
     {
-      MPI_Recv(&neighbour_num, 1, MPI_INT, processor_id, TAG_0, MPI_COMM_WORLD, &stat);
-      computed_matrix.push_back(neighbour_num);
+      MPI_Recv(&c, 1, MPI_INT, processor_id, TAG_0, MPI_COMM_WORLD, &stat);
+      computed_matrix.push_back(c);
     }
 
     // final print of calculated result to stdout
