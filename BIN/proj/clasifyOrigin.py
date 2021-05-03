@@ -17,41 +17,25 @@ class Data(Dataset):
     def __len__(self):
         return self.len
 
+# model of MLP
 class Net(nn.Module):
-    def __init__(self,D_in,H,D_out):
+    def __init__(self,input_dim,output_dim):
         super(Net,self).__init__()
 
-        #self.layer_1 = nn.Linear(D_in, 512)
-        self.layer_2 = nn.Linear(D_in, 128)
-        self.layer_3 = nn.Linear(128, 64)
-        self.layer_out = nn.Linear(64, D_out)
+        self.layer_1 = nn.Linear(input_dim, 128)
+        self.layer_2 = nn.Linear(128, 64)
+        self.layer_out = nn.Linear(64, output_dim)
 
         self.relu = nn.ReLU()
         self.softmax = nn.Softmax(dim=1)
         self.dropout = nn.Dropout(p=0.5)
-        self.batchnorm1 = nn.BatchNorm1d(512)
-        self.batchnorm2 = nn.BatchNorm1d(128)
-        self.batchnorm3 = nn.BatchNorm1d(64)
-
 
     def forward(self,x):
-        #x=torch.nn.sigmoid(self.linear1(x))
-        #x = torch.nn.functional.softmax (self.linear1(x))
-        #x = self.linear2(x)
-        #return x
-        '''
         x = self.layer_1(x)
-        x = self.batchnorm1(x)
-        x = self.relu(x)
-        '''
-
-        x = self.layer_2(x)
-        #x = self.batchnorm2(x)
         x = self.relu(x)
         x = self.dropout(x)
 
-        x = self.layer_3(x)
-        #x = self.batchnorm3(x)
+        x = self.layer_2(x)
         x = self.softmax(x)
         x = self.dropout(x)
 
@@ -59,13 +43,13 @@ class Net(nn.Module):
 
         return x
 
+# reduce data of each class
+# class with minimum of vectors found and each other class reduce vectors to this minimum too
 def reduceData(vectors, targets):
     unique, counts = np.unique(targets, return_counts=True)
     classes_counts_dict = dict(zip(unique, counts))
-    print(classes_counts_dict)
     min_key = min(classes_counts_dict, key=classes_counts_dict.get)
     min_value = classes_counts_dict[min_key]
-    print(min_value)
 
     class_0_count = 0
     class_1_count = 0
@@ -104,25 +88,18 @@ def reduceData(vectors, targets):
         elif (target == 5):
             class_5_count += 1
 
-        #print(vector)
-        #print(target)
-
         vectors_reduced = np.append(vectors_reduced, vector)
         classes_reduced = np.append(classes_reduced, target)
 
     vectors_reduced.shape = (min_value * 3, 8)
-    print(vectors_reduced)
-    print(classes_reduced)
-
-
-    print(vectors_reduced.shape)
-    print(classes_reduced.shape)
 
     vectors_reduced = vectors_reduced.astype('int64')
     classes_reduced = classes_reduced.astype('int64')
 
     return vectors_reduced, classes_reduced
 
+# replace classes when we want to have only 3 classes:
+# 0 - rcam, 1 - wtm (wtm-cla, wtm-csa, wtm-rca), 2 - csam (csam-rca, csam-csa)
 def replaceClasses(targets):
     print(targets)
     targets[targets==3]=2
@@ -131,33 +108,22 @@ def replaceClasses(targets):
     print(targets)
     return targets
 
+# load vectors and their classes
 vectors = np.genfromtxt('./csvFiles/allVectorsO15.csv',delimiter=",", dtype=int, skip_header=1)
 targets = np.genfromtxt('./csvFiles/allClassesO15.csv',dtype=int, skip_header=1)
-print(vectors.dtype)
-print(targets.dtype)
+
 #targets = replaceClasses(targets)
 
 #vectors, targets = reduceData(vectors, targets)
-print(vectors.dtype)
-print(targets.dtype)
 
+# normalize vector values
 transformer = Normalizer().fit(vectors)
 vectors = transformer.transform(vectors)
-
-
-
-print(vectors)
-print(targets)
 
 # split to train and val dataset
 x, x_val, y, y_val = train_test_split(vectors, targets, test_size=0.30, random_state=42)
 # split val dataset to val dataset and test dataset
 x_val, x_test, y_val, y_test = train_test_split(x_val, y_val, test_size=0.50, random_state=42)
-
-print(x.shape)
-print(y.shape)
-print(x_val.shape)
-print(y_val.shape)
 
 x_train = x.reshape(-1, x.shape[1]).astype('float32')
 y_train = y
@@ -168,7 +134,6 @@ y_val = y_val
 x_test = x_test.reshape(-1, x_test.shape[1]).astype('float32')
 y_test = y_test
 
-print(x_train)
 
 x_val = torch.from_numpy(x_val)
 y_val = torch.from_numpy(y_val)
@@ -179,47 +144,38 @@ y_test = torch.from_numpy(y_test)
 data_set = Data()
 trainloader = DataLoader(dataset=data_set,batch_size=32)
 
-print(data_set.x[1:10])
-
-input_dim = 8     # how many Variables are in the dataset
-hidden_dim = 4 # hidden layers
+input_dim = 8     # how many features has vector
 output_dim = 6   # number of classes
 
-model = Net(input_dim,hidden_dim,output_dim)
-print('W:',list(model.parameters())[0].size())
-print('b',list(model.parameters())[1].size())
-
+model = Net(input_dim,output_dim)
+# declare criteria of model
 criterion = nn.CrossEntropyLoss()
 learning_rate = 0.001
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+n_epochs = 100
 
-n_epochs = 1000
 loss_list = []
-
 epochs_list = []
 accuracies = []
 losses = []
 accuracy = 0
+# train model for declared count of epochs
 for epoch in range(n_epochs):
     epochs_list.append(epoch)
 
     minibatches_iterations = 0
     losses_minibatches_sum = 0
     for x, y in trainloader:
-        #clear gradient
         optimizer.zero_grad()
-        #make a prediction
         z = model(x)
         loss = criterion(z,y)
-        # calculate gradients of parameters
         loss.backward()
-        # update parameters
         optimizer.step()
 
         losses_minibatches_sum = losses_minibatches_sum + loss.item() # accumulate losses of minibatches
         minibatches_iterations += 1
 
-
+    # in each epoch make prediction on validation data and compute accuracy of prediction
     z = model(x_val)
     values, indices = torch.max(z.data,1)
 
@@ -231,12 +187,11 @@ for epoch in range(n_epochs):
         if (target == prediction):
             correctly_classified += 1
 
-    #print(correctly_classified)
     new_accuracy = (correctly_classified / np.shape(np_targets)[0])
 
-    #print(new_accuracy)
     accuracies.append(new_accuracy)
 
+    # make deep copy of model with highest accuracy
     if (new_accuracy > accuracy):
         best_model = copy.deepcopy(model)
 
@@ -244,8 +199,9 @@ for epoch in range(n_epochs):
 
     losses.append(loss_average)
 
-    print('epoch {}, loss {}, accuracy {}'.format(epoch, loss_average, new_accuracy))
+    print('Epoch {}, Loss {}, Accuracy {}'.format(epoch, loss_average, new_accuracy))
 
+# plot graphs of loss and accuracy development
 figure = plt.figure(figsize=(10, 10))
 performance_plot = figure.add_subplot(2,1,1)
 performance_plot.plot(epochs_list, accuracies, color = "orchid", label="accuracy development")
@@ -262,17 +218,14 @@ plt.savefig('./mlpGraphs/mlpGraphs.png')
 z = best_model(x_test)
 values, indices = torch.max(z.data,1)
 
-# finally predict on test data
+# finally predict model with best accuracy on test data
 np_predictions = indices.detach().numpy()
 np_targets = y_test.detach().numpy()
-print(np_predictions)
-print(np_targets)
 
 correctly_classified = 0
 for target, prediction in zip(np_targets, np_predictions):
     if (target == prediction):
         correctly_classified += 1
 
-print(correctly_classified)
 accuracy = (correctly_classified / np.shape(np_targets)[0])
-print(accuracy)
+print('Accuracy on Test Data: {}'.format(accuracy))
