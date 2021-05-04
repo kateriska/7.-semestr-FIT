@@ -24,7 +24,7 @@ Now filtered json is created and could be next analyzed:
 python countFeatures.py
 
 This program counts and write to csv file:
-Count of Used Gates Types by CGP (INVA, AND2, OR2, XOR2, NAND2, NOR2, XNOR2)
+Count of Used Gates Types by CGP (IDA, INVA, AND2, OR2, XOR2, NAND2, NOR2, XNOR2)
 Count of All Used Gates by CGP
 Size of Compressed Chr File
 Count of Subparts a XOR b XOR c XOR d

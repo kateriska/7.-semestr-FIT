@@ -152,7 +152,7 @@ model = Net(input_dim,output_dim)
 criterion = nn.CrossEntropyLoss()
 learning_rate = 0.001
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-n_epochs = 100
+n_epochs = 200
 
 loss_list = []
 epochs_list = []
