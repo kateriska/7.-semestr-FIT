@@ -75,7 +75,7 @@ def getMostProbableAminoacids():
     count = 0
     # init keys to dictionary with nodes_id
     ancestrals_dict = {}
-    with open("./files/ancestrals.csv", "r") as a_file:
+    with open("ancestrals.csv", "r") as a_file:
       for line in a_file:
         line = line.strip()
 
@@ -93,7 +93,7 @@ def getMostProbableAminoacids():
 
     count = 0
     # fill dictionary values on specified keys
-    with open("./files/ancestrals.csv", "r") as a_file:
+    with open("ancestrals.csv", "r") as a_file:
       for line in a_file:
         line = line.strip()
 
@@ -308,14 +308,14 @@ def insertGapesToSequence(ancestrals_dict, positions_to_insert_gape):
 
 
 # read phylogenetic tree
-tree = Phylo.read("./files/tree.tre", "newick")
+tree = Phylo.read("tree.tre", "newick")
 # print input tree in ASCII form
 Phylo.draw_ascii(tree)
 
 ancestrals_dict = getMostProbableAminoacids()
 
 # read fasta file and get names of written sequences and length of one written sequence
-records = list(SeqIO.parse("./files/msa.fasta", "fasta"))
+records = list(SeqIO.parse("msa.fasta", "fasta"))
 sequences_id = []
 for r in records:
     sequences_id.append(r.name)
