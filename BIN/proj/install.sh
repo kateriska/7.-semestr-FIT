@@ -6,4 +6,4 @@ source BINenv/bin/activate
 export PYTHONPATH=$PWD:$PYTHONPATH
 
 # Download and install required packages
-#pip install -r requirements.txt
+pip install -r requirements.txt
