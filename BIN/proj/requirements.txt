@@ -1,3 +1,4 @@
+-f https://download.pytorch.org/whl/torch_stable.html
 cycler==0.10.0
 joblib==1.0.1
 kiwisolver==1.3.1
