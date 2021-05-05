@@ -4,14 +4,21 @@ Course: Bio-Inspired Computers
 Academic Year: 2020/21
 
 Set Up of Python Virtual Environment:
+Run the install script: chmod +x install.sh && . install.sh
+For quick access to python virtual environment, use . path.sh next time.
+
+Prerequisites:
+./cgp-approx14ep.chr/ folder with chromozomes of multipliers (see https://owncloud.fit.vutbr.cz/index.php/s/qPttCF0QRXyKHtw “cgp-approx14ep nasobicky 8x8”)
+./cgp-approx14ep.json file with characteristics of multipliers (see https://owncloud.fit.vutbr.cz/index.php/s/qPttCF0QRXyKHtw “cgp-approx14ep nasobicky 8x8”)
+
 
 How to Run Program:
-python filterJson.py rcam|wtmcla|wtmcsa|all -n|-p [number]
+python filterJson.py rcam|wtmcla|wtmcsa|csamcsa|csamrca|wtmrca|all -n|-p [number]
 
 Program filterJson.py is used for filtering objects and interesting metrics from cgp-approx14ep.json. This is done also because of faster searching
 through json file in next step.
 
-rcam|wtmcla|wtmcsa|all are types of filtered multiplier types or "all" when all types are used
+rcam|wtmcla|wtmcsa|csamcsa|csamrca|wtmrca are types of filtered multiplier types or "all" when all types are used
 -n [number] - how many multipliers should be filtered e.g. -n 10
 -p [number] - which ratio of multipliers should be filtered (number in range 0-1) e.g. -p 0.5 (half of multipliers is filtered)
 
@@ -23,7 +30,7 @@ python filterJson.py rcam -p 0.25 - randomly selects from rcam approximated mult
 Now filtered json is created and could be next analyzed:
 python countFeatures.py
 
-This program counts and write to csv file:
+This program counts and write to csv file ./csvFiles/chrFeatures.csv:
 Count of Used Gates Types by CGP (IDA, INVA, AND2, OR2, XOR2, NAND2, NOR2, XNOR2)
 Count of All Used Gates by CGP
 Size of Compressed Chr File
@@ -31,8 +38,9 @@ Count of Subparts a XOR b XOR c XOR d
 Count of Subparts (a AND b) XOR (c AND d)
 Variability of Implementation of the Highest Bit of Product (this is most computationally intensive because of searching possible O15 outputs on all gates)
 Feature vector - [Sum of All Gates, Sum of Used Gates by CGP]
+In ./csvFiles/allVectors.csv, ./csvFiles/allClasses.csv are written vectors and classes which could be used for classification of seed with MLP
 
-In the end program shows graphs and correlations based on Pearson Correlation Coefficient:
+In the end program shows graphs and correlations based on Pearson Correlation Coefficient
 
 
 Classification of Origin (Seed) of approximated multiplier:
@@ -46,5 +54,7 @@ This program uses vectors of Variability of Implementation of the Highest Bit of
 4 - wtm_csa
 5 - wtm_rca
 
+Vectors and classes of all approximated multipliers are pre-saved in files ./csvFiles/allVectorsO15.csv, ./csvFiles/allClassesO15.csv
+These vectors were extracted in advance, because analyze of all almost 25 000 multipliers is computationally intensive and lasts a few hours.
 Multiclass classifier is implemented as MLP Network with combination of relu and softmax activation functions and cross entropy loss.
-Average accuracy is around 80 %.
+Average val and test accuracy is around 80 %.

@@ -1,3 +1,12 @@
+# Project name: Relationship Analysis of Approximated Circuits
+# Author: Katerina Fortova
+# Login: xforto00
+# Year: 2020 / 2021
+
+# Description: MLP prediction of seed of evolved multiplier by CGP, network uses vectors of Variability of Implementation of the Highest Bit of Product (./csvFiles/allVectorsO15.csv, ./csvFiles/allClassesO15.csv) for all evolved multipliers
+# It was also experimented with vectors of gates types used by CGP (./csvFiles/allVectorsUsedGatesTypes.csv, ./csvFiles/allClassesUsedGatesTypes.csv) but results werent good (see Project Presentation)
+# loss and accuracy graph is saved into ./mlpGraphs/ folder
+
 import torch.nn as nn
 import torch
 import matplotlib.pyplot as plt
@@ -207,7 +216,7 @@ performance_plot = figure.add_subplot(2,1,1)
 performance_plot.plot(epochs_list, accuracies, color = "orchid", label="accuracy development")
 performance_plot.set_xlabel('Count of epochs', fontsize=8, horizontalalignment='right', x=1.0)
 performance_plot.legend(prop={'size': 10})
-performance_plot.set_title('Single Feature Logistic Regression Performance', fontsize=10)
+performance_plot.set_title('MLP Performance', fontsize=10)
 
 performance_plot2 = figure.add_subplot(2,1,2)
 performance_plot2.plot(epochs_list, losses, color = "indigo", label="loss development")

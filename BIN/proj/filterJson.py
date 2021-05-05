@@ -1,3 +1,13 @@
+# Project name: Relationship Analysis of Approximated Circuits
+# Author: Katerina Fortova
+# Login: xforto00
+# Year: 2020 / 2021
+
+# Description:
+# This program has to be run before countFeatures.py
+# Program filteres JSON file for only interesting metrics which could be used in next analysis
+# User can filter only objects of one type (rcam|wtmcla|wtmcsa|csamcsa|csamrca|wtmrca) or all of them and set a number of filtered objects or ratio (e.g. 0.5 - 50 % of objects)
+
 import random
 import json
 import sys
@@ -77,7 +87,7 @@ arguments_count = len(sys.argv) - 1
 used_filter = "all"
 used_count = False
 
-if (arguments_count == 3 and (sys.argv[1] == "rcam" or sys.argv[1] == "wtmcla" or sys.argv[1] == "wtmcsa" or sys.argv[1] == "all")):
+if (arguments_count == 3 and (sys.argv[1] == "rcam" or sys.argv[1] == "wtmcla" or sys.argv[1] == "wtmcsa" or sys.argv[1] == "csamrca" or sys.argv[1] == "csamcsa" or sys.argv[1] == "wtmrca" or sys.argv[1] == "all")):
     used_filter = sys.argv[1]
 
     if (sys.argv[2] == "-n"): # count of objects e.g. -n 20

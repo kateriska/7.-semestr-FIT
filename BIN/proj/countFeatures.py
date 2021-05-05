@@ -1,3 +1,24 @@
+# Project name: Relationship Analysis of Approximated Circuits
+# Author: Katerina Fortova
+# Login: xforto00
+# Year: 2020 / 2021
+
+# Description:
+# python filterJson.py rcam|wtmcla|wtmcsa|csamcsa|csamrca|wtmrca|all -n|-p [number] has to be run before running this program (see Readme)!
+# Extraction of features to csv file ./csvFiles/chrFeatures.csv:
+# Count of Used Gates Types by CGP (IDA, INVA, AND2, OR2, XOR2, NAND2, NOR2, XNOR2)
+# Count of All Used Gates by CGP
+# Size of Compressed Chr File
+# Count of Subparts a XOR b XOR c XOR d
+# Count of Subparts (a AND b) XOR (c AND d)
+# Variability of Implementation of the Highest Bit of Product ("ORIGIN MULTIPLIER is written on this field for origin multipliers")
+# Feature vector - [Sum of All Gates, Sum of Used Gates by CGP]
+# In ./csvFiles/allVectors.csv, ./csvFiles/allClasses.csv are written vectors and classes which could be used for classification of seed with MLP
+# In the end program shows graphs and correlations based on Pearson Correlation Coefficient
+
+# Analyse of all almost 25 000 multipliers is computationally intensive and lasts a few hours. It is recommended to analyse only some smaller subset of objects to get results in more reasonable time.
+# The most computationally intensive parts are computing Variability of Implementation of the Highest Bit of Product, also we search through JSON file, where orjson lib was used instead of json lib for faster processing.
+
 import glob
 import csv
 import gzip
@@ -5,7 +26,6 @@ import os
 import orjson
 from matplotlib import pyplot as plt
 import scipy.stats
-import time
 import numpy as np
 
 # parse gate and get ids of their two inputs and one output
@@ -219,8 +239,6 @@ def writeVectors(f, g, seed_value, gates_counts):
     csv_file.close()
 
 
-# start time of measure program
-start_time = time.time()
 
 chr_path = './cgp-approx14ep.chr/'
 chr_origin_path = './rodicovske8b_nasobicky/'
@@ -249,8 +267,9 @@ with open(g, 'w+') as csv_file:
 csv_file.close()
 
 #################### PARENT MULTIPLIERS ########################################
-o15_origin_dict = {}
+o15_origin_dict = {} # dictionary for saving count of gates types which are used for computation of highest bit of the product for origin (seed) multipliers
 
+print("PARENT (SEED) MULTIPLIERS:")
 # iterate through json file with three origin multipliers which are in original json
 with open('origin_data.json', "rb") as json_file:
     json_data = orjson.loads(json_file.read())
@@ -309,22 +328,9 @@ with open('origin_data.json', "rb") as json_file:
 
         # count of subparts a XOR b XOR c XOR d
         xor_xor_xor_count = getXorXorXorCount(xor_gates)
-        #print(xor_xor_xor_count)
 
         # count of subparts (a AND b) XOR (c AND d)
         and_xor_and_count = getAndXorAndCount(xor_gates, and_gates)
-
-        gates_counts = list()
-        gates_counts.append(ida_count)
-        gates_counts.append(inva_count)
-        gates_counts.append(and_count)
-        gates_counts.append(or_count)
-        gates_counts.append(xor_count)
-        gates_counts.append(nand_count)
-        gates_counts.append(nor_count)
-        gates_counts.append(xnor_count)
-
-        #writeVectors(f,g,seed_value,gates_counts)
 
         # write info to csv file
         with open('./csvFiles/chrFeatures.csv', 'a', newline='') as csv_file:
@@ -391,18 +397,6 @@ for file in glob.glob("./rodicovske8b_nasobicky/*"):
     # count of subparts (a AND b) XOR (c AND d)
     and_xor_and_count = getAndXorAndCount(xor_gates, and_gates)
 
-    gates_counts = list()
-    gates_counts.append(ida_count)
-    gates_counts.append(inva_count)
-    gates_counts.append(and_count)
-    gates_counts.append(or_count)
-    gates_counts.append(xor_count)
-    gates_counts.append(nand_count)
-    gates_counts.append(nor_count)
-    gates_counts.append(xnor_count)
-
-    #writeVectors(f,g,seed_value,gates_counts)
-
     # write info to csv file
     with open('./csvFiles/chrFeatures.csv', 'a', newline='') as csv_file:
         writer = csv.writer(csv_file)
@@ -410,10 +404,11 @@ for file in glob.glob("./rodicovske8b_nasobicky/*"):
 
     csv_file.close()
 
-
+print("Gates Types for Computing Highest Bit of Product for Seed Multipliers:")
 print(o15_origin_dict)
 
 #################### APROXIMATED EVOLVED MULTIPLIERS ########################################
+print("APPROXIMATED (EVOLVED) MULTIPLIERS:")
 xor_values = []
 mae_values = []
 wce_values = []
@@ -503,17 +498,7 @@ with open('filtered_data.json', "rb") as json_file:
         xor_xor_xor_values.append(xor_xor_xor_count)
         and_xor_and_count_values.append(and_xor_and_count)
 
-        gates_counts = list()
-        gates_counts.append(ida_count)
-        gates_counts.append(inva_count)
-        gates_counts.append(and_count)
-        gates_counts.append(or_count)
-        gates_counts.append(xor_count)
-        gates_counts.append(nand_count)
-        gates_counts.append(nor_count)
-        gates_counts.append(xnor_count)
-
-        writeVectors(f,g,seed_value,o15_variability)
+        writeVectors(f,g,seed_value,o15_variability) # write vectors and classes for prediction with MLP of seed of approximated multiplier
 
         # write info to csv file
         with open('./csvFiles/chrFeatures.csv', 'a', newline='') as csv_file:
@@ -523,8 +508,6 @@ with open('filtered_data.json', "rb") as json_file:
         csv_file.close()
 
 
-# print duration of program
-print("--- %s seconds ---" % (time.time() - start_time))
 
 ############### PLOTING OF INTERESTING GRAPHS AND CORRELATIONS BETWEEN DATA ######################################
 # show some interesting graphs and correlations of dependecies
@@ -533,7 +516,7 @@ print("--- %s seconds ---" % (time.time() - start_time))
 figure = plt.figure(figsize=(30, 30))
 
 r1, p1 = scipy.stats.pearsonr(xor_values, mae_values)
-print(r1)
+#print(r1)
 xor_mae_plot = figure.add_subplot(2,3,1)
 xor_mae_plot.scatter(xor_values, mae_values)
 xor_mae_plot.set_title("Pearsonr: " + str(r1), fontsize=8)
@@ -541,7 +524,7 @@ xor_mae_plot.set_xlabel('Count of Used XOR Gates by CGP')
 xor_mae_plot.set_ylabel('Mean Absolute Error')
 
 r2, p2 = scipy.stats.pearsonr(xor_values, wce_values)
-print(r2)
+#print(r2)
 xor_wce_plot = figure.add_subplot(2,3,2)
 xor_wce_plot.scatter(xor_values, wce_values)
 xor_wce_plot.set_title("Pearsonr: " + str(r2), fontsize=8)
@@ -549,7 +532,7 @@ xor_wce_plot.set_xlabel('Count of Used XOR Gates by CGP')
 xor_wce_plot.set_ylabel('Worst Case Error')
 
 r3, p3 = scipy.stats.pearsonr(compressed_chr_sizes, mae_values)
-print(r3)
+#print(r3)
 compressed_mae_plot = figure.add_subplot(2,3,3)
 compressed_mae_plot.scatter(compressed_chr_sizes, mae_values)
 compressed_mae_plot.set_title("Pearsonr: " + str(r3), fontsize=8)
@@ -557,7 +540,7 @@ compressed_mae_plot.set_xlabel('Compressed Chr File Size')
 compressed_mae_plot.set_ylabel('Mean Absolute Error')
 
 r4, p4 = scipy.stats.pearsonr(compressed_chr_sizes, wce_values)
-print(r4)
+#print(r4)
 compressed_wce_plot = figure.add_subplot(2,3,4)
 compressed_wce_plot.scatter(compressed_chr_sizes, wce_values)
 compressed_wce_plot.set_title("Pearsonr: " + str(r4), fontsize=8)
@@ -565,7 +548,7 @@ compressed_wce_plot.set_xlabel('Compressed Chr File Size')
 compressed_wce_plot.set_ylabel('Worst Case Error')
 
 r5, p5 = scipy.stats.pearsonr(xor_xor_xor_values, mae_values)
-print(r5)
+#print(r5)
 xor_xor_xor_mae_percent_plot = figure.add_subplot(2,3,5)
 xor_xor_xor_mae_percent_plot.scatter(xor_xor_xor_values, mae_values)
 xor_xor_xor_mae_percent_plot.set_title("Pearsonr: " + str(r5), fontsize=8)
@@ -573,7 +556,7 @@ xor_xor_xor_mae_percent_plot.set_xlabel('Count of XOR XOR XOR Subparts')
 xor_xor_xor_mae_percent_plot.set_ylabel('Mean Absolute Error')
 
 r6, p6 = scipy.stats.pearsonr(and_xor_and_count_values, mae_values)
-print(r6)
+#print(r6)
 and_xor_and_mae_plot = figure.add_subplot(2,3,6)
 and_xor_and_mae_plot.scatter(and_xor_and_count_values, mae_values)
 and_xor_and_mae_plot.set_title("Pearsonr: " + str(r6), fontsize=8)
@@ -585,7 +568,7 @@ and_xor_and_mae_plot.set_ylabel('Mean Absolute Error')
 figure2 = plt.figure(figsize=(30, 30))
 
 r7, p7 = scipy.stats.pearsonr(xor_values, area_values)
-print(r7)
+#print(r7)
 xor_area_plot = figure2.add_subplot(2,3,1)
 xor_area_plot.scatter(xor_values, area_values)
 xor_area_plot.set_title("Pearsonr: " + str(r7), fontsize=8)
@@ -593,7 +576,7 @@ xor_area_plot.set_xlabel('Count of Used XOR Gates by CGP')
 xor_area_plot.set_ylabel('pdk45_area')
 
 r8, p8 = scipy.stats.pearsonr(xor_values, delay_values)
-print(r8)
+#print(r8)
 xor_delay_plot = figure2.add_subplot(2,3,2)
 xor_delay_plot.scatter(xor_values, delay_values)
 xor_delay_plot.set_title("Pearsonr: " + str(r8), fontsize=8)
@@ -601,7 +584,7 @@ xor_delay_plot.set_xlabel('Count of Used XOR Gates by CGP')
 xor_delay_plot.set_ylabel('pdk45_delay')
 
 r9, p9 = scipy.stats.pearsonr(xor_values, pwr_values)
-print(r9)
+#print(r9)
 xor_pwr_plot = figure2.add_subplot(2,3,3)
 xor_pwr_plot.scatter(xor_values, pwr_values)
 xor_pwr_plot.set_title("Pearsonr: " + str(r9), fontsize=8)
@@ -609,7 +592,7 @@ xor_pwr_plot.set_xlabel('Count of Used XOR Gates by CGP')
 xor_pwr_plot.set_ylabel('pdk45_pwr')
 
 r10, p10 = scipy.stats.pearsonr(xor_xor_xor_values, wce_values)
-print(r10)
+#print(r10)
 xor_xor_xor_wce_plot = figure2.add_subplot(2,3,4)
 xor_xor_xor_wce_plot.scatter(xor_xor_xor_values, wce_values)
 xor_xor_xor_wce_plot.set_title("Pearsonr: " + str(r10), fontsize=8)
@@ -617,7 +600,7 @@ xor_xor_xor_wce_plot.set_xlabel('Count of XOR XOR XOR Subparts')
 xor_xor_xor_wce_plot.set_ylabel('Worst Case Error')
 
 r11, p11 = scipy.stats.pearsonr(and_xor_and_count_values, wce_values)
-print(r11)
+#print(r11)
 and_xor_and_wce_plot = figure2.add_subplot(2,3,5)
 and_xor_and_wce_plot.scatter(and_xor_and_count_values, wce_values)
 and_xor_and_wce_plot.set_title("Pearsonr: " + str(r11), fontsize=8)
@@ -625,85 +608,12 @@ and_xor_and_wce_plot.set_xlabel('Count of AND XOR AND Subparts')
 and_xor_and_wce_plot.set_ylabel('Worst Case Error')
 
 r12, p12 = scipy.stats.pearsonr(xor_values, levels_values)
-print(r12)
+#print(r12)
 xor_levels_plot = figure2.add_subplot(2,3,6)
 xor_levels_plot.scatter(xor_values, levels_values)
 xor_levels_plot.set_title("Pearsonr: " + str(r12), fontsize=8)
 xor_levels_plot.set_xlabel('Count of Used XOR Gates by CGP')
 xor_levels_plot.set_ylabel('Levels')
 r12, p12 = scipy.stats.pearsonr(xor_values, levels_values)
-print(r12)
 
 plt.show()
-
-'''
--0.5810519990081127
--0.4458477189999104
-0.09165341582928331
-0.1067373313587608
--0.4458477189999104
-0.6370072647108483
-0.891686499037995
-0.6637750321946084
-0.9371490935825837
-
-
-
-
-1.125
--0.5953690466407922
--0.4605243583056319
-0.09165341582928331
-0.1067373313587608
--0.4605243583056318
-0.6949995992005571
-0.91653132446021
-0.7124773999749886
-0.9628147078397827
-
-
--0.6105094444846811
--0.5192288570109109
-0.5898542809715568
-0.45469169242677027
--0.6052006933007329
--0.3548548845358819
-0.9419721939938519
-0.939126052167467
-0.9760709828652058
--0.5277579870127447
--0.25326372824607946
-0.9760709828652058
-
--0.5953672486771648
--0.46049366111516843
-0.09165558045136821
-0.10673997362810861
--0.6185195515167919
--0.44852669040220633
-0.9165193521817137
-0.7125189778419628
-0.9628090783460592
--0.5109351726448996
--0.32792102819564345
-0.9628090783460592
-
---- 20874.210809469223 seconds ---
--0.5953672486771648
--0.46049366111516843
-0.09165558045136821
-0.10673997362810861
--0.6185195515167919
--0.44852669040220633
-0.9165193521817137
-0.7125189778419628
-0.9628090783460592
--0.5109351726448996
--0.32792102819564345
-0.6950146828672377
-0.6950146828672377
-
-
-
-
-'''
