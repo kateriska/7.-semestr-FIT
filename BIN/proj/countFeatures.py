@@ -184,16 +184,6 @@ def computeO15variability(seed, o15_origin_dict, o15_gates):
 
     return o15_variability
 
-# predict on some metrics from which origin is the evolved multiplier
-def metricsOriginPredict(seed, vectors_origin_dict, delay_value):
-    absolute_distance_dict = {}
-    for key, value in vectors_origin_dict.items():
-        absolute_distance = abs(value - delay_value)
-        absolute_distance_dict[key] = absolute_distance
-
-    predicted_origin = min(absolute_distance_dict, key=lambda k: absolute_distance_dict[k])
-    return predicted_origin
-
 # recursively compute for gate on which final output is connected (#%o O15,O14,O13,O12,O11,O10,O9,O8,O7,O6,O5,O4,O3,O2,O1,O0)
 def computeGatesConnectedOutput(used_cgp_gates_codes_list, outputs_list, gate):
     next_gate_found = False
@@ -227,7 +217,6 @@ def writeVectors(f, g, seed_value, gates_counts):
     elif (seed_value == "wtm_rca"):
         class_id = 5
 
-    #print(gates_counts)
     with open(f, 'a') as csv_file:
         writer = csv.writer(csv_file)
         writer.writerow(gates_counts)
@@ -421,8 +410,6 @@ pwr_values = []
 xor_xor_xor_values = []
 and_xor_and_count_values = []
 
-prediction_correct_count = 0
-prediction_wrong_count = 0
 # iterate through json file with evolved multipliers
 with open('filtered_data.json', "rb") as json_file:
     json_data = orjson.loads(json_file.read())

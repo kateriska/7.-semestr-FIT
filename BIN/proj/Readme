@@ -27,6 +27,8 @@ python filterJson.py all -p 1 - filters all approximated multipliers (more than 
 python filterJson.py all -n 100 - randomly selects from all approximated multipliers 100 of them
 python filterJson.py rcam -p 0.25 - randomly selects from rcam approximated multipliers 25 % of them
 
+It is recommended to filter only some smaller subset of objects for next analysis to get results in more reasonable time.
+
 Now filtered json is created and could be next analyzed:
 python countFeatures.py
 
@@ -38,7 +40,7 @@ Count of Subparts a XOR b XOR c XOR d
 Count of Subparts (a AND b) XOR (c AND d)
 Variability of Implementation of the Highest Bit of Product (this is most computationally intensive because of searching possible O15 outputs on all gates)
 Feature vector - [Sum of All Gates, Sum of Used Gates by CGP]
-In ./csvFiles/allVectors.csv, ./csvFiles/allClasses.csv are written vectors and classes which could be used for classification of seed with MLP
+In ./csvFiles/allVectors.csv, ./csvFiles/allClasses.csv are written vectors and classes which could be used for classification of seed with MLP (Variability of Implementation of the Highest Bit of Product)
 
 In the end program shows graphs and correlations based on Pearson Correlation Coefficient
 

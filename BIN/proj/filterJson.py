@@ -7,6 +7,7 @@
 # This program has to be run before countFeatures.py
 # Program filteres JSON file for only interesting metrics which could be used in next analysis
 # User can filter only objects of one type (rcam|wtmcla|wtmcsa|csamcsa|csamrca|wtmrca) or all of them and set a number of filtered objects or ratio (e.g. 0.5 - 50 % of objects)
+# It is recommended to analyse only some smaller subset of objects to get results in more reasonable time for countFeatures.py script, because processing all almost 25 000 multipliers take some longer time.
 
 import random
 import json
